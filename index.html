@@ -26,20 +26,6 @@
 </head>
 <body class="bg-slate-100 min-h-screen p-8 text-slate-800">
 
-    <!-- BARRA SUPERIOR DE PRESENÇA SIMULTÂNEA -->
-    <div id="barra-presenca" class="max-w-7xl mx-auto mb-4 bg-blue-900 text-white p-3 rounded-xl shadow-md flex items-center justify-between text-xs">
-        <div class="flex items-center gap-2">
-            <span class="relative flex h-3 w-3">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-            </span>
-            <span class="font-semibold">Usuários Ativos no Sistema:</span>
-        </div>
-        <div id="lista-usuarios-online" class="flex items-center gap-3 flex-wrap">
-            <span class="text-slate-300 italic">Nenhum outro usuário conectado...</span>
-        </div>
-    </div>
-
     <!-- TELA 1: CURSOS (PÁGINA INICIAL) -->
     <div id="tela-cursos" class="max-w-7xl mx-auto">
         <header class="mb-8 border-b pb-4 flex justify-between items-center flex-wrap gap-4">
@@ -52,12 +38,21 @@
                     <i class="fa-brands fa-google text-red-500"></i> Entrar com Google
                 </button>
                 <div id="user-info" class="hidden flex items-center gap-3">
+                    <!-- Contador visual de usuários online no mesmo Gmail -->
+                    <div id="indicador-online-corpinho" class="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 py-1.5 px-3 rounded-lg text-xs font-semibold" title="Usuários conectados neste e-mail">
+                        <i class="fa-solid fa-user text-emerald-600"></i>
+                        <span id="qtd-online-corpinho">1</span> <span class="hidden sm:inline">online</span>
+                    </div>
+
                     <div class="flex flex-col text-right">
                         <span id="user-name" class="text-xs font-bold text-slate-800"></span>
                         <span id="operador-nome" class="text-[11px] text-blue-600 font-semibold">Operador: Padrão</span>
                     </div>
                     <button onclick="abrirModalCriarUsuario()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-1.5 px-3 rounded-lg border border-blue-200 transition-colors flex items-center gap-1">
                         <i class="fa-solid fa-user-plus"></i> Mudar Usuário
+                    </button>
+                    <button onclick="abrirModalConfiguracoes()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1">
+                        <i class="fa-solid fa-gear"></i> Configurações
                     </button>
                     <button onclick="fazerLogout()" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-medium py-1.5 px-3 rounded-lg transition-colors">Sair</button>
                 </div>
@@ -117,16 +112,26 @@
 
     <!-- TELA 3: DISCIPLINAS -->
     <div id="tela-disciplinas" class="max-w-5xl mx-auto hidden">
-        <header class="mb-6 border-b pb-4 flex items-center justify-between">
+        <header class="mb-6 border-b pb-4 flex items-center justify-between flex-wrap gap-3">
             <div>
                 <button onclick="voltarParaTurmas()" class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-2 transition-colors">
                     <i class="fa-solid fa-arrow-left"></i> Voltar para Turmas
                 </button>
                 <h1 id="nome-turma-titulo" class="text-3xl font-bold text-slate-900">---</h1>
             </div>
-            <button onclick="adicionarDisciplina()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium shadow transition-colors flex items-center gap-2">
-                <i class="fa-solid fa-plus"></i> Nova Disciplina
-            </button>
+            
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- Botões para gerenciar Listas de Professores e Disciplinas do Curso -->
+                <button onclick="abrirModalLista('professores')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-chalkboard-user"></i> Lista de Professores
+                </button>
+                <button onclick="abrirModalLista('disciplinas')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-book-open"></i> Lista de Disciplinas
+                </button>
+                <button onclick="adicionarDisciplina()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium shadow transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Nova Disciplina
+                </button>
+            </div>
         </header>
 
         <p class="text-xs text-slate-500 mb-3 flex items-center gap-1">
@@ -134,6 +139,110 @@
         </p>
 
         <div id="lista-disciplinas" class="flex flex-col gap-1.5"></div>
+    </div>
+
+    <!-- MODAL DE LISTAS (PROFESSORES OU DISCIPLINAS POR CURSO) -->
+    <div id="modal-gerenciar-lista" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border-2 border-slate-300">
+            <div class="flex items-center justify-between mb-4 border-b pb-2">
+                <h3 id="modal-lista-titulo" class="text-xl font-bold text-slate-900">Gerenciar Lista</h3>
+                <button onclick="fecharModalLista()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <p class="text-xs text-slate-500 mb-3">Esta lista é vinculada exclusivamente ao curso selecionado e estará disponível em todas as turmas dele.</p>
+
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="input-novo-item-lista" placeholder="Digitar nome..." class="flex-1 text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
+                <button onclick="adicionarItemNaLista()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow transition-colors">
+                    Adicionar
+                </button>
+            </div>
+
+            <div id="container-itens-cadastrados" class="max-h-60 overflow-y-auto custom-scrollbar flex flex-col gap-2 border-t pt-3">
+                <!-- Itens carregados via JS -->
+            </div>
+
+            <div class="flex justify-end gap-3 mt-5">
+                <button onclick="fecharModalLista()" class="px-4 py-2 text-sm font-medium bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-colors">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÕES (HISTÓRICO, TURMAS APAGADAS, DOWNLOAD PDF/TEXTO) -->
+    <div id="modal-configuracoes" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-6 border-2 border-slate-300 flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between border-b pb-3 mb-4">
+                <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-gear text-blue-600"></i> Painel de Configurações & Histórico
+                </h3>
+                <button onclick="fecharModalConfiguracoes()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="overflow-y-auto custom-scrollbar flex-1 pr-1 flex flex-col gap-6">
+                <!-- Seção 1: Download de Dados da Turma -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-file-arrow-down text-blue-600"></i> Baixar Informações da Turma (PDF / Texto)
+                    </h4>
+                    <p class="text-xs text-slate-500 mb-3">Selecione uma turma do curso ativo para gerar o resumo completo para download em texto.</p>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <select id="select-turma-download" class="text-xs p-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 min-w-[200px]">
+                            <!-- Opções carregadas via JS -->
+                        </select>
+                        <button onclick="baixarInformacoesTurmaTexto()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> Baixar Resumo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Seção 2: Histórico de Edição -->
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Histórico de Modificações do Usuário
+                    </h4>
+                    <div class="border rounded-lg overflow-hidden max-h-40 overflow-y-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-100 text-slate-700 font-semibold border-b">
+                                <tr>
+                                    <th class="p-2">Data/Hora</th>
+                                    <th class="p-2">Operador</th>
+                                    <th class="p-2">E-mail</th>
+                                    <th class="p-2">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-historico-edicao">
+                                <tr><td colspan="4" class="p-3 text-center italic text-slate-400">Nenhum histórico registrado ainda.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Seção 3: Turmas Concluídas (Apagadas) -->
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-box-archive text-amber-600"></i> Registro de Turmas Concluídas / Apagadas
+                    </h4>
+                    <div class="border rounded-lg overflow-hidden max-h-40 overflow-y-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-100 text-slate-700 font-semibold border-b">
+                                <tr>
+                                    <th class="p-2">Turma</th>
+                                    <th class="p-2">Data de Exclusão</th>
+                                    <th class="p-2">Excluído por</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-turmas-apagadas">
+                                <tr><td colspan="3" class="p-3 text-center italic text-slate-400">Nenhuma turma concluída/apagada registrada.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-4 border-t mt-3">
+                <button onclick="fecharModalConfiguracoes()" class="px-4 py-2 text-sm font-medium bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-colors">Fechar</button>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL DE CRIAR USUÁRIO PERSONALIZADO -->
@@ -228,7 +337,11 @@
         let contadorTurmas = 1;
         let unsubscribeFirestore = null;
 
+        let tipoListaAtualModal = null; // 'professores' ou 'disciplinas'
+
         let dadosSistema = {};
+        let historicoEdicao = [];
+        let turmasApagadas = [];
 
         // Auxiliar para saber se o usuário local está editando algum campo
         function usuarioEstaEditando() {
@@ -287,30 +400,24 @@
             }
         }
 
-        // SISTEMA DE PRESENÇA EM TEMPO REAL
+        // SISTEMA DE PRESENÇA EM TEMPO REAL (Filtrado estritamente por Gmail de Login)
         function iniciarPresencaOnline() {
             if (!usuarioAtual) return;
             atualizarLocalizacaoPresenca();
 
             db.collection('presenca').onSnapshot(snapshot => {
-                const container = document.getElementById('lista-usuarios-online');
-                container.innerHTML = '';
-                let outros = 0;
+                let countLogadosGmail = 0;
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    if (data.timestamp && (Date.now() - data.timestamp.toMillis() < 120000)) {
-                        outros++;
-                        const badge = document.createElement('span');
-                        badge.className = 'bg-blue-800 text-blue-100 px-2.5 py-1 rounded-md text-[11px] font-medium border border-blue-700 flex items-center gap-1';
-                        badge.innerHTML = `<i class="fa-solid fa-user text-[10px] text-emerald-400"></i> <strong>${data.nomeOperador}</strong> (${data.local || 'Navegando'})`;
-                        container.appendChild(badge);
+                    // Só contabiliza se for o mesmo Gmail da conta autenticada e estiver ativo nos últimos 2 min
+                    if (data.userEmail === usuarioAtual.email && data.timestamp && (Date.now() - data.timestamp.toMillis() < 120000)) {
+                        countLogadosGmail++;
                     }
                 });
 
-                if (outros === 0) {
-                    container.innerHTML = `<span class="text-slate-300 italic">Nenhum outro usuário conectado...</span>`;
-                }
+                const badgeCorpinho = document.getElementById('qtd-online-corpinho');
+                if (badgeCorpinho) badgeCorpinho.innerText = countLogadosGmail;
             });
 
             setInterval(() => atualizarLocalizacaoPresenca(), 30000);
@@ -330,15 +437,17 @@
             }).catch(e => console.error("Erro ao registrar presença:", e));
         }
 
-        // SINCRONIZAÇÃO COMPARTILHADA NO FIRESTORE (COM PROTEÇÃO DE FOCO)
+        // SINCRONIZAÇÃO COMPARTILHADA NO FIRESTORE
         function conectarAoFirestoreCompartilhado() {
             unsubscribeFirestore = db.collection('sistema_escola').doc('dados_gerais').onSnapshot(doc => {
-                // Impede que o snapshot do Firebase recarregue a tela caso o usuário esteja no meio de uma digitação
                 if (usuarioEstaEditando()) return;
 
                 if (doc.exists) {
                     const data = doc.data();
                     if (data.dadosSistema) dadosSistema = data.dadosSistema;
+                    if (data.historicoEdicao) historicoEdicao = data.historicoEdicao;
+                    if (data.turmasApagadas) turmasApagadas = data.turmasApagadas;
+
                     if (data.listaCursosHTML) {
                         document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
                         inicializarDragAndDropCursos();
@@ -353,10 +462,29 @@
             });
         }
 
-        function salvarDadosNoFirebase() {
+        function registrarHistorico(acao) {
             if (!usuarioAtual) return;
+            const novoRegistro = {
+                data: new Date().toLocaleString('pt-BR'),
+                operador: nomeOperador,
+                email: usuarioAtual.email,
+                acao: acao
+            };
+            historicoEdicao.unshift(novoRegistro);
+            if (historicoEdicao.length > 50) historicoEdicao.pop();
+        }
+
+        function salvarDadosNoFirebase(acaoHistorico = null) {
+            if (!usuarioAtual) return;
+            
+            if (acaoHistorico) {
+                registrarHistorico(acaoHistorico);
+            }
+
             db.collection('sistema_escola').doc('dados_gerais').set({
                 dadosSistema,
+                historicoEdicao,
+                turmasApagadas,
                 listaCursosHTML: document.getElementById('lista-cursos').innerHTML,
                 ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
                 editadoPor: nomeOperador
@@ -365,21 +493,242 @@
 
         function salvarTurmasDoCursoAtual() {
             if (cursoAtualId) {
-                if (!dadosSistema[cursoAtualId]) dadosSistema[cursoAtualId] = { htmlTurmas: '', disciplinas: {} };
+                garantirEstruturaCurso(cursoAtualId);
                 const grid = document.getElementById('grid-turmas').cloneNode(true);
                 const btn = grid.querySelector('#btn-adicionar');
                 if (btn) btn.remove();
                 dadosSistema[cursoAtualId].htmlTurmas = grid.innerHTML;
             }
-            salvarDadosNoFirebase();
+            salvarDadosNoFirebase("Alteração em Turmas");
         }
 
         function salvarDisciplinasAtual() {
             if (cursoAtualId && turmaAtualId) {
-                if (!dadosSistema[cursoAtualId]) dadosSistema[cursoAtualId] = { htmlTurmas: '', disciplinas: {} };
-                dadosSistema[cursoAtualId].disciplinas[turmaAtualId] = document.getElementById('lista-disciplinas').innerHTML;
+                garantirEstruturaCurso(cursoAtualId);
+                
+                // Grava o valor selecionado nos selects para persistência
+                const container = document.getElementById('lista-disciplinas');
+                container.querySelectorAll('.item-disciplina').forEach(item => {
+                    const selProf = item.querySelector('.select-instrutor');
+                    if (selProf) selProf.setAttribute('data-selecionado', selProf.value);
+                    
+                    const selDisc = item.querySelector('.select-nome-disciplina');
+                    if (selDisc) selDisc.setAttribute('data-selecionado', selDisc.value);
+                });
+
+                dadosSistema[cursoAtualId].disciplinas[turmaAtualId] = container.innerHTML;
             }
-            salvarDadosNoFirebase();
+            salvarDadosNoFirebase("Alteração em Disciplinas");
+        }
+
+        function garantirEstruturaCurso(idCurso) {
+            if (!dadosSistema[idCurso]) {
+                dadosSistema[idCurso] = { 
+                    htmlTurmas: '', 
+                    disciplinas: {}, 
+                    listaProfessores: [], 
+                    listaDisciplinas: [] 
+                };
+            }
+            if (!dadosSistema[idCurso].listaProfessores) dadosSistema[idCurso].listaProfessores = [];
+            if (!dadosSistema[idCurso].listaDisciplinas) dadosSistema[idCurso].listaDisciplinas = [];
+        }
+
+        // GERENCIAMENTO DAS LISTAS DE PROFESSORES E DISCIPLINAS POR CURSO
+        function abrirModalLista(tipo) {
+            if (!cursoAtualId) return;
+            tipoListaAtualModal = tipo;
+            garantirEstruturaCurso(cursoAtualId);
+
+            const titulo = document.getElementById('modal-lista-titulo');
+            titulo.innerText = tipo === 'professores' ? 'Lista de Professores (Curso Atual)' : 'Lista de Disciplinas (Curso Atual)';
+            document.getElementById('input-novo-item-lista').value = '';
+            
+            renderizarItensListaModal();
+            document.getElementById('modal-gerenciar-lista').classList.remove('hidden');
+        }
+
+        function fecharModalLista() {
+            document.getElementById('modal-gerenciar-lista').classList.add('hidden');
+            tipoListaAtualModal = null;
+        }
+
+        function renderizarItensListaModal() {
+            const container = document.getElementById('container-itens-cadastrados');
+            container.innerHTML = '';
+            const lista = tipoListaAtualModal === 'professores' 
+                ? dadosSistema[cursoAtualId].listaProfessores 
+                : dadosSistema[cursoAtualId].listaDisciplinas;
+
+            if (!lista || lista.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 italic text-center py-2">Nenhum item cadastrado nesta lista.</p>`;
+                return;
+            }
+
+            lista.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-200 text-xs font-semibold text-slate-700';
+                div.innerHTML = `
+                    <span>${item}</span>
+                    <button onclick="removerItemDaLista(${index})" class="text-slate-400 hover:text-red-500 transition-colors p-1" title="Apagar item"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function adicionarItemNaLista() {
+            const input = document.getElementById('input-novo-item-lista');
+            const valor = input.value.trim().toUpperCase();
+            if (!valor || !cursoAtualId) return;
+
+            garantirEstruturaCurso(cursoAtualId);
+            const lista = tipoListaAtualModal === 'professores' 
+                ? dadosSistema[cursoAtualId].listaProfessores 
+                : dadosSistema[cursoAtualId].listaDisciplinas;
+
+            if (!lista.includes(valor)) {
+                lista.push(valor);
+                salvarDadosNoFirebase(`Adicionou na lista de ${tipoListaAtualModal}: ${valor}`);
+                renderizarItensListaModal();
+                input.value = '';
+                
+                // Recarrega disciplinas caso a tela de disciplinas esteja visível
+                if (turmaAtualId) carregarDisciplinasNaTela();
+            }
+        }
+
+        function removerItemDaLista(index) {
+            if (!cursoAtualId) return;
+            const lista = tipoListaAtualModal === 'professores' 
+                ? dadosSistema[cursoAtualId].listaProfessores 
+                : dadosSistema[cursoAtualId].listaDisciplinas;
+
+            if (lista && index >= 0 && index < lista.length) {
+                const removido = lista.splice(index, 1);
+                salvarDadosNoFirebase(`Removeu da lista de ${tipoListaAtualModal}: ${removido[0]}`);
+                renderizarItensListaModal();
+                if (turmaAtualId) carregarDisciplinasNaTela();
+            }
+        }
+
+        // PAINEL DE CONFIGURAÇÕES
+        function abrirModalConfiguracoes() {
+            // Preenche selects e tabelas
+            const selectTurma = document.getElementById('select-turma-download');
+            selectTurma.innerHTML = '';
+
+            if (cursoAtualId && dadosSistema[cursoAtualId] && dadosSistema[cursoAtualId].htmlTurmas) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = dadosSistema[cursoAtualId].htmlTurmas;
+                const turmas = tempDiv.querySelectorAll('.card-turma');
+
+                turmas.forEach(card => {
+                    const nome = card.querySelector('h2')?.innerText.trim() || 'Sem Nome';
+                    const option = document.createElement('option');
+                    option.value = nome;
+                    option.innerText = nome;
+                    selectTurma.appendChild(option);
+                });
+            }
+
+            if (selectTurma.children.length === 0) {
+                selectTurma.innerHTML = `<option value="">Nenhuma turma disponível neste curso</option>`;
+            }
+
+            // Tabela Histórico
+            const tabelaHist = document.getElementById('tabela-historico-edicao');
+            tabelaHist.innerHTML = '';
+            if (historicoEdicao.length === 0) {
+                tabelaHist.innerHTML = `<tr><td colspan="4" class="p-3 text-center italic text-slate-400">Nenhum histórico registrado ainda.</td></tr>`;
+            } else {
+                historicoEdicao.forEach(h => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b hover:bg-slate-50';
+                    tr.innerHTML = `<td class="p-2">${h.data}</td><td class="p-2 font-semibold text-slate-800">${h.operador}</td><td class="p-2">${h.email}</td><td class="p-2">${h.acao}</td>`;
+                    tabelaHist.appendChild(tr);
+                });
+            }
+
+            // Tabela Apagadas
+            const tabelaApagadas = document.getElementById('tabela-turmas-apagadas');
+            tabelaApagadas.innerHTML = '';
+            if (turmasApagadas.length === 0) {
+                tabelaApagadas.innerHTML = `<tr><td colspan="3" class="p-3 text-center italic text-slate-400">Nenhuma turma concluída/apagada registrada.</td></tr>`;
+            } else {
+                turmasApagadas.forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b hover:bg-slate-50';
+                    tr.innerHTML = `<td class="p-2 font-bold text-slate-800">${t.nome}</td><td class="p-2">${t.dataExclusao}</td><td class="p-2">${t.excluidoPor}</td>`;
+                    tabelaApagadas.appendChild(tr);
+                });
+            }
+
+            document.getElementById('modal-configuracoes').classList.remove('hidden');
+        }
+
+        function fecharModalConfiguracoes() {
+            document.getElementById('modal-configuracoes').classList.add('hidden');
+        }
+
+        function baixarInformacoesTurmaTexto() {
+            const select = document.getElementById('select-turma-download');
+            const nomeTurma = select.value;
+            if (!nomeTurma) {
+                alert("Selecione uma turma válida.");
+                return;
+            }
+
+            let textoFinal = `=========================================\n`;
+            textoFinal += `RELATÓRIO ACADÊMICO - GRAU TÉCNICO MONTESE\n`;
+            textoFinal += `TURMA: ${nomeTurma}\n`;
+            textoFinal += `Data de Emissão: ${new Date().toLocaleString('pt-BR')}\n`;
+            textoFinal += `Emitido por: ${nomeOperador} (${usuarioAtual ? usuarioAtual.email : ''})\n`;
+            textoFinal += `=========================================\n\n`;
+
+            if (cursoAtualId && dadosSistema[cursoAtualId]) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = dadosSistema[cursoAtualId].htmlTurmas;
+                const cards = tempDiv.querySelectorAll('.card-turma');
+                
+                cards.forEach(card => {
+                    if (card.querySelector('h2')?.innerText.trim() === nomeTurma) {
+                        const status = card.querySelector('.badge-status')?.innerText || '-';
+                        const datas = card.querySelectorAll('.campo-data');
+                        const alunos = card.querySelectorAll('.campo-editavel')[card.querySelectorAll('.campo-editavel').length - 1]?.innerText || '0';
+                        const juncao = card.querySelector('.juncao-codigo')?.innerText || 'Nenhuma';
+                        
+                        textoFinal += `Status: ${status}\n`;
+                        textoFinal += `Início: ${datas[0]?.innerText || '-'}\n`;
+                        textoFinal += `Prev. Término: ${datas[1]?.innerText || '-'}\n`;
+                        textoFinal += `Junção: ${juncao}\n`;
+                        textoFinal += `Quantidade de Alunos: ${alunos} Alunos\n\n`;
+                    }
+                });
+
+                textoFinal += `--- DISCIPLINAS E PROFESSORES ---\n`;
+                
+                // Encontrar id da turma
+                const containerDisc = document.createElement('div');
+                let achouDisc = false;
+                for (let tId in dadosSistema[cursoAtualId].disciplinas) {
+                    containerDisc.innerHTML = dadosSistema[cursoAtualId].disciplinas[tId];
+                    containerDisc.querySelectorAll('.item-disciplina').forEach(item => {
+                        const disc = item.querySelector('.select-nome-disciplina')?.value || item.querySelector('strong')?.innerText || 'Disciplina';
+                        const prof = item.querySelector('.select-instrutor')?.value || 'A definir';
+                        const datas = item.querySelectorAll('.campo-data');
+                        
+                        textoFinal += `- Disciplina: ${disc} | Instrutor(a): ${prof} | Período: ${datas[0]?.innerText || ''} a ${datas[1]?.innerText || ''}\n`;
+                        achouDisc = true;
+                    });
+                }
+                if (!achouDisc) textoFinal += `Nenhuma disciplina registrada para esta turma.\n`;
+            }
+
+            const blob = new Blob([textoFinal], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Turma_${nomeTurma.replace(/\s+/g, '_')}_Informacoes.txt`;
+            link.click();
         }
 
         // LÓGICA DE CURSOS
@@ -388,6 +737,7 @@
             if (editando) return;
 
             cursoAtualId = idCurso;
+            garantirEstruturaCurso(cursoAtualId);
             const nomeCurso = elemento ? elemento.querySelector('.nome-curso').innerText : 'Turmas do Curso';
             document.getElementById('titulo-curso-atual').innerText = nomeCurso;
 
@@ -420,7 +770,7 @@
         function adicionarCurso() {
             contadorCursos++;
             const idNovoCurso = 'curso_' + Date.now();
-            dadosSistema[idNovoCurso] = { htmlTurmas: '', disciplinas: {} };
+            dadosSistema[idNovoCurso] = { htmlTurmas: '', disciplinas: {}, listaProfessores: [], listaDisciplinas: [] };
 
             const novoCurso = document.createElement('div');
             novoCurso.className = 'item-curso group bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 p-7 flex justify-between items-center cursor-pointer transition-all relative min-h-[5.5rem]';
@@ -444,7 +794,7 @@
             inicializarDragAndDropCursos();
             toggleEdicaoCurso(novoCurso.querySelector('.btn-toggle-edit-curso'));
             novoCurso.querySelector('.nome-curso')?.focus();
-            salvarDadosNoFirebase();
+            salvarDadosNoFirebase("Adicionou Novo Curso");
         }
 
         function solicitarSenhaEEditarCurso(botao) {
@@ -497,7 +847,7 @@
                     toggleEdicaoCurso(btn);
                 } else if (tipoAcaoCurso === 'excluir' && cursoAlvoAcao) {
                     cursoAlvoAcao.remove();
-                    salvarDadosNoFirebase();
+                    salvarDadosNoFirebase("Excluiu Curso");
                     fecharModalSenhaCurso();
                 }
             } else {
@@ -516,7 +866,7 @@
                 h2.focus();
             } else {
                 h2.innerText = h2.innerText.toUpperCase();
-                salvarDadosNoFirebase(); // Salva só após finalizar a edição
+                salvarDadosNoFirebase("Alterou Nome do Curso");
             }
         }
 
@@ -554,7 +904,7 @@
                 });
                 handle.addEventListener('dragend', () => { 
                     item.classList.remove('dragging'); 
-                    salvarDadosNoFirebase(); 
+                    salvarDadosNoFirebase("Reordenou Cursos"); 
                 });
             });
 
@@ -611,7 +961,11 @@
                             <option value="Matutino">Matutino</option><option value="Vespertino">Vespertino</option><option value="Noturno" selected>Noturno</option>
                         </select>
                     </div>
-                    <span class="campo-editavel outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="0 Alunos" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" onblur="salvarTurmasDoCursoAtual()"></span>
+                    <!-- Nome "Alunos" Fixo -->
+                    <div class="flex items-center gap-1">
+                        <span class="campo-editavel outline-none rounded px-1 focus:ring-2 focus:ring-blue-400 font-bold text-slate-700" data-placeholder="0" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" onblur="salvarTurmasDoCursoAtual()">0</span>
+                        <span>Alunos</span>
+                    </div>
                 </div>`;
 
             document.getElementById('grid-turmas').insertBefore(novoCard, document.getElementById('btn-adicionar'));
@@ -671,7 +1025,6 @@
             if (editando && juncaoInput.querySelector('input').value.trim()) juncaoTexto.classList.remove('hidden');
             else juncaoTexto.classList.add('hidden');
 
-            // Salva as alterações ao desativar a edição
             salvarTurmasDoCursoAtual();
         }
 
@@ -732,11 +1085,23 @@
         }
 
         function confirmarExclusao() {
-            if (cardParaRemover) { cardParaRemover.remove(); salvarTurmasDoCursoAtual(); }
+            if (cardParaRemover) { 
+                const nomeTurma = cardParaRemover.querySelector('h2')?.innerText.trim() || 'Sem nome';
+                
+                // Registra em Turmas Apagadas nas Configurações
+                turmasApagadas.unshift({
+                    nome: nomeTurma,
+                    dataExclusao: new Date().toLocaleString('pt-BR'),
+                    excluidoPor: `${nomeOperador} (${usuarioAtual ? usuarioAtual.email : ''})`
+                });
+
+                cardParaRemover.remove(); 
+                salvarTurmasDoCursoAtual(); 
+            }
             fecharModalExclusao();
         }
 
-        // LÓGICA DE DISCIPLINAS
+        // LÓGICA DE DISCIPLINAS E MONTAGEM DE LISTAS SUSPENSAS POR CURSO
         function abrirDisciplinas(idTurma, el) {
             if (el?.querySelector('.btn-toggle-edit i')?.classList.contains('fa-toggle-on')) return;
             turmaAtualId = idTurma;
@@ -755,13 +1120,55 @@
             const container = document.getElementById('lista-disciplinas');
             container.innerHTML = htmlDisc;
 
+            // Restaura estado dos selects de disciplina, instrutor e status
             container.querySelectorAll('.item-disciplina').forEach(item => {
-                const select = item.querySelector('select');
-                if (select) {
-                    const statusSalvo = select.getAttribute('data-status');
-                    if (statusSalvo) select.value = statusSalvo;
+                const selectStatus = item.querySelector('.select-status-disciplina');
+                if (selectStatus) {
+                    const statusSalvo = selectStatus.getAttribute('data-status');
+                    if (statusSalvo) selectStatus.value = statusSalvo;
                 }
+
+                // Atualizar / popular selects de instrutores
+                atualizarOptionsSelectInstrutor(item);
+                // Atualizar / popular selects de nomes das disciplinas
+                atualizarOptionsSelectDisciplina(item);
             });
+        }
+
+        function atualizarOptionsSelectInstrutor(item) {
+            const selProf = item.querySelector('.select-instrutor');
+            if (!selProf) return;
+
+            const valorSalvo = selProf.getAttribute('data-selecionado') || selProf.value;
+            selProf.innerHTML = `<option value="A DEFINIR">A DEFINIR</option>`;
+
+            const listaProfs = dadosSistema[cursoAtualId]?.listaProfessores || [];
+            listaProfs.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.innerText = p;
+                selProf.appendChild(opt);
+            });
+
+            if (valorSalvo) selProf.value = valorSalvo;
+        }
+
+        function atualizarOptionsSelectDisciplina(item) {
+            const selDisc = item.querySelector('.select-nome-disciplina');
+            if (!selDisc) return;
+
+            const valorSalvo = selDisc.getAttribute('data-selecionado') || selDisc.value;
+            selDisc.innerHTML = `<option value="NOVA DISCIPLINA">NOVA DISCIPLINA</option>`;
+
+            const listaDiscs = dadosSistema[cursoAtualId]?.listaDisciplinas || [];
+            listaDiscs.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.innerText = d;
+                selDisc.appendChild(opt);
+            });
+
+            if (valorSalvo) selDisc.value = valorSalvo;
         }
 
         function voltarParaTurmas() {
@@ -773,17 +1180,30 @@
         }
 
         function adicionarDisciplina() {
+            garantirEstruturaCurso(cursoAtualId);
             const container = document.getElementById('lista-disciplinas'), novaDisc = document.createElement('div');
             novaDisc.className = 'item-disciplina group bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-3 leading-tight relative';
+            
             novaDisc.innerHTML = `
-                <div class="flex items-center gap-2.5">
+                <div class="flex items-center gap-2.5 flex-1">
                     <i draggable="true" class="drag-handle fa-solid fa-grip-vertical text-slate-300 hover:text-slate-600 text-xs cursor-grab active:cursor-grabbing p-1"></i>
                     <span class="bolinha-status w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0" title="Status"></span>
                     
-                    <div class="text-xs text-slate-700 flex items-center flex-wrap gap-x-1.5">
-                        <strong class="campo-editavel text-sm font-semibold text-slate-900 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="Nova Disciplina" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" onblur="salvarDisciplinasAtual()"></strong>
+                    <div class="text-xs text-slate-700 flex items-center flex-wrap gap-x-1.5 w-full">
+                        <!-- Lista Suspensa Nome da Disciplina -->
+                        <select onchange="salvarDisciplinasAtual()" class="select-nome-disciplina text-xs font-bold text-slate-900 border border-slate-200 rounded px-1 py-0.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-400">
+                            <option value="NOVA DISCIPLINA">NOVA DISCIPLINA</option>
+                        </select>
+
                         <span class="text-slate-300 hidden sm:inline">|</span>
-                        <span class="text-slate-600">Instrutor (a): <strong class="campo-instrutor campo-editavel font-medium text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="A definir" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" onblur="salvarDisciplinasAtual()"></strong></span>
+                        
+                        <!-- Lista Suspensa Nome do Instrutor -->
+                        <span class="text-slate-600 flex items-center gap-1">Instrutor (a): 
+                            <select onchange="salvarDisciplinasAtual()" class="select-instrutor text-xs font-semibold text-slate-800 border border-slate-200 rounded px-1 py-0.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-400">
+                                <option value="A DEFINIR">A DEFINIR</option>
+                            </select>
+                        </span>
+
                         <span class="text-slate-300 hidden sm:inline">|</span>
                         <span class="text-slate-500 text-xs flex items-center gap-1">
                             <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)" onblur="salvarDisciplinasAtual()"></span> a
@@ -793,7 +1213,7 @@
                 </div>
                 <div onclick="event.stopPropagation()" class="acoes-disciplina opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm z-10">
                     <div class="relative opacity-30 hover:opacity-100 transition-opacity duration-150">
-                        <select onchange="alterarStatusBordaDisciplina(this)" data-status="normal" class="text-[11px] rounded px-1 py-0.5 border border-slate-300 bg-white font-medium focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
+                        <select onchange="alterarStatusBordaDisciplina(this)" data-status="normal" class="select-status-disciplina text-[11px] rounded px-1 py-0.5 border border-slate-300 bg-white font-medium focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
                             <option value="normal">Sem instrutor</option>
                             <option value="sem-instrutor">Lotação não enviada</option>
                             <option value="confirmada">Lotação Enviada</option>
@@ -804,9 +1224,11 @@
                 </div>`;
 
             container.appendChild(novaDisc);
+            atualizarOptionsSelectInstrutor(novaDisc);
+            atualizarOptionsSelectDisciplina(novaDisc);
+
             inicializarDragAndDrop();
             toggleEdicaoDisciplina(novaDisc.querySelector('.btn-toggle-edit'));
-            novaDisc.querySelector('.campo-editavel')?.focus();
             salvarDisciplinasAtual();
         }
 
