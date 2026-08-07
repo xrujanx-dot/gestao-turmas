@@ -26,9 +26,23 @@
 </head>
 <body class="bg-slate-100 min-h-screen p-8 text-slate-800">
 
+    <!-- BARRA SUPERIOR DE PRESENÇA SIMULTÂNEA -->
+    <div id="barra-presenca" class="max-w-7xl mx-auto mb-4 bg-blue-900 text-white p-3 rounded-xl shadow-md flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            <span class="font-semibold">Usuários Ativos no Sistema:</span>
+        </div>
+        <div id="lista-usuarios-online" class="flex items-center gap-3 flex-wrap">
+            <span class="text-slate-300 italic">Nenhum outro usuário conectado...</span>
+        </div>
+    </div>
+
     <!-- TELA 1: CURSOS (PÁGINA INICIAL) -->
     <div id="tela-cursos" class="max-w-7xl mx-auto">
-        <header class="mb-8 border-b pb-4 flex justify-between items-center">
+        <header class="mb-8 border-b pb-4 flex justify-between items-center flex-wrap gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-900">Cursos Técnicos</h1>
                 <p class="text-slate-600">Selecione um curso para gerenciar suas turmas - Grau Técnico Montese</p>
@@ -38,7 +52,13 @@
                     <i class="fa-brands fa-google text-red-500"></i> Entrar com Google
                 </button>
                 <div id="user-info" class="hidden flex items-center gap-3">
-                    <span id="user-name" class="text-xs font-semibold text-slate-700"></span>
+                    <div class="flex flex-col text-right">
+                        <span id="user-name" class="text-xs font-bold text-slate-800"></span>
+                        <span id="operador-nome" class="text-[11px] text-blue-600 font-semibold">Operador: Padrão</span>
+                    </div>
+                    <button onclick="abrirModalCriarUsuario()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-1.5 px-3 rounded-lg border border-blue-200 transition-colors flex items-center gap-1">
+                        <i class="fa-solid fa-user-plus"></i> Mudar Usuário
+                    </button>
                     <button onclick="fazerLogout()" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-medium py-1.5 px-3 rounded-lg transition-colors">Sair</button>
                 </div>
             </div>
@@ -116,6 +136,33 @@
         <div id="lista-disciplinas" class="flex flex-col gap-1.5"></div>
     </div>
 
+    <!-- MODAL DE CRIAR USUÁRIO PERSONALIZADO -->
+    <div id="modal-criar-usuario" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border-2 border-slate-300">
+            <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-4"><i class="fa-solid fa-user-gear text-2xl"></i></div>
+            <h3 class="text-xl font-bold text-slate-900 mb-1">Identificação de Usuário</h3>
+            <p class="text-xs text-slate-500 mb-4">Insira o seu nome de operador e a senha master para autenticar.</p>
+            
+            <div class="mb-3">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Seu Nome / Apelido:</label>
+                <input type="text" id="input-nome-operador" placeholder="Ex: Maria - Secretaria" class="w-full text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Senha Master:</label>
+                <input type="password" id="input-senha-master-user" placeholder="****" class="w-full text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p id="erro-senha-user" class="text-xs text-red-500 hidden mt-1">Senha master incorreta.</p>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button onclick="fecharModalCriarUsuario()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
+                <button onclick="salvarNovoOperador()" class="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE EXCLUSÃO DE TURMA -->
     <div id="modal-excluir" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-100">
@@ -170,14 +217,16 @@
         const auth = firebase.auth(), db = firebase.firestore(), provider = new firebase.auth.GoogleAuthProvider();
         
         let usuarioAtual = null;
+        let nomeOperador = localStorage.getItem('operador_nome') || 'Operador';
         let cursoAtualId = null;
         let turmaAtualId = null;
         let cardParaRemover = null;
         let cursoAlvoAcao = null;
-        let tipoAcaoCurso = null; // 'editar' ou 'excluir'
+        let tipoAcaoCurso = null; 
         let intervaloTimer = null;
         let contadorCursos = 1;
         let contadorTurmas = 1;
+        let unsubscribeFirestore = null;
 
         let dadosSistema = {};
 
@@ -192,33 +241,120 @@
                 btnLogin?.classList.add('hidden');
                 userInfo?.classList.remove('hidden');
                 if (userName) userName.innerText = user.displayName;
-                carregarDadosDoFirebase();
+                document.getElementById('operador-nome').innerText = `Operador: ${nomeOperador}`;
+                conectarAoFirestoreCompartilhado();
+                iniciarPresencaOnline();
             } else {
                 btnLogin?.classList.remove('hidden');
                 userInfo?.classList.add('hidden');
+                if(unsubscribeFirestore) unsubscribeFirestore();
             }
         });
 
-        // Persistência Firebase
-        function salvarDadosNoFirebase() {
-            if (!usuarioAtual) return;
-            db.collection('usuarios').doc(usuarioAtual.uid).set({
-                dadosSistema,
-                listaCursosHTML: document.getElementById('lista-cursos').innerHTML,
-                ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch(err => console.error("Erro ao salvar:", err));
+        // USUÁRIO PERSONALIZADO
+        function abrirModalCriarUsuario() {
+            document.getElementById('input-nome-operador').value = nomeOperador;
+            document.getElementById('input-senha-master-user').value = '';
+            document.getElementById('erro-senha-user').classList.add('hidden');
+            document.getElementById('modal-criar-usuario').classList.remove('hidden');
         }
 
-        function carregarDadosDoFirebase() {
+        function fecharModalCriarUsuario() {
+            document.getElementById('modal-criar-usuario').classList.add('hidden');
+        }
+
+        function salvarNovoOperador() {
+            const novoNome = document.getElementById('input-nome-operador').value.trim();
+            const senha = document.getElementById('input-senha-master-user').value;
+
+            if (senha === SENHA_MASTER) {
+                if (novoNome) {
+                    nomeOperador = novoNome;
+                    localStorage.setItem('operador_nome', nomeOperador);
+                    document.getElementById('operador-nome').innerText = `Operador: ${nomeOperador}`;
+                    atualizarLocalizacaoPresenca();
+                }
+                fecharModalCriarUsuario();
+            } else {
+                document.getElementById('erro-senha-user').classList.remove('hidden');
+            }
+        }
+
+        // SISTEMA DE PRESENÇA EM TEMPO REAL
+        function iniciarPresencaOnline() {
             if (!usuarioAtual) return;
-            db.collection('usuarios').doc(usuarioAtual.uid).get().then(doc => {
+            atualizarLocalizacaoPresenca();
+
+            // Escuta usuários online
+            db.collection('presenca').onSnapshot(snapshot => {
+                const container = document.getElementById('lista-usuarios-online');
+                container.innerHTML = '';
+                let outros = 0;
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    // Considera online se atualizou nos últimos 2 minutos
+                    if (data.timestamp && (Date.now() - data.timestamp.toMillis() < 120000)) {
+                        outros++;
+                        const badge = document.createElement('span');
+                        badge.className = 'bg-blue-800 text-blue-100 px-2.5 py-1 rounded-md text-[11px] font-medium border border-blue-700 flex items-center gap-1';
+                        badge.innerHTML = `<i class="fa-solid fa-user text-[10px] text-emerald-400"></i> <strong>${data.nomeOperador}</strong> (${data.local || 'Navegando'})`;
+                        container.appendChild(badge);
+                    }
+                });
+
+                if (outros === 0) {
+                    container.innerHTML = `<span class="text-slate-300 italic">Nenhum outro usuário conectado...</span>`;
+                }
+            });
+
+            // Ping a cada 30 segundos
+            setInterval(() => atualizarLocalizacaoPresenca(), 30000);
+        }
+
+        function atualizarLocalizacaoPresenca() {
+            if (!usuarioAtual) return;
+            let localStr = "Cursos Principais";
+            if (turmaAtualId) localStr = "Editando Disciplinas";
+            else if (cursoAtualId) localStr = "Vendo Turmas";
+
+            db.collection('presenca').doc(usuarioAtual.uid).set({
+                nomeOperador: nomeOperador,
+                userEmail: usuarioAtual.email,
+                local: localStr,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(e => console.error("Erro ao registrar presença:", e));
+        }
+
+        // SINCRONIZAÇÃO COMPARTILHADA NO FIRESTORE
+        function conectarAoFirestoreCompartilhado() {
+            unsubscribeFirestore = db.collection('sistema_escola').doc('dados_gerais').onSnapshot(doc => {
                 if (doc.exists) {
                     const data = doc.data();
                     if (data.dadosSistema) dadosSistema = data.dadosSistema;
-                    if (data.listaCursosHTML) document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
-                    inicializarDragAndDropCursos();
+                    if (data.listaCursosHTML) {
+                        document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
+                        inicializarDragAndDropCursos();
+                    }
+                    
+                    // Atualiza a tela visível no momento
+                    if (cursoAtualId && document.getElementById('tela-turmas').classList.contains('hidden') === false) {
+                        carregarTurmasNaTela();
+                    } else if (turmaAtualId && document.getElementById('tela-disciplinas').classList.contains('hidden') === false) {
+                        carregarDisciplinasNaTela();
+                    }
                 }
             });
+        }
+
+        function salvarDadosNoFirebase() {
+            if (!usuarioAtual) return;
+            db.collection('sistema_escola').doc('dados_gerais').set({
+                dadosSistema,
+                listaCursosHTML: document.getElementById('lista-cursos').innerHTML,
+                ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
+                editadoPor: nomeOperador
+            }).catch(err => console.error("Erro ao salvar:", err));
         }
 
         function salvarTurmasDoCursoAtual() {
@@ -249,23 +385,30 @@
             const nomeCurso = elemento ? elemento.querySelector('.nome-curso').innerText : 'Turmas do Curso';
             document.getElementById('titulo-curso-atual').innerText = nomeCurso;
 
+            carregarTurmasNaTela();
+
+            document.getElementById('tela-cursos').classList.add('hidden');
+            document.getElementById('tela-turmas').classList.remove('hidden');
+            atualizarLocalizacaoPresenca();
+        }
+
+        function carregarTurmasNaTela() {
             const grid = document.getElementById('grid-turmas');
             const btnAdd = document.getElementById('btn-adicionar');
             grid.innerHTML = '';
             
-            if (dadosSistema[idCurso] && dadosSistema[idCurso].htmlTurmas) {
-                grid.innerHTML = dadosSistema[idCurso].htmlTurmas;
+            if (dadosSistema[cursoAtualId] && dadosSistema[cursoAtualId].htmlTurmas) {
+                grid.innerHTML = dadosSistema[cursoAtualId].htmlTurmas;
             }
             grid.appendChild(btnAdd);
-
-            document.getElementById('tela-cursos').classList.add('hidden');
-            document.getElementById('tela-turmas').classList.remove('hidden');
         }
 
         function voltarParaCursos() {
             salvarTurmasDoCursoAtual();
+            cursoAtualId = null;
             document.getElementById('tela-turmas').classList.add('hidden');
             document.getElementById('tela-cursos').classList.remove('hidden');
+            atualizarLocalizacaoPresenca();
         }
 
         function adicionarCurso() {
@@ -472,39 +615,30 @@
             salvarTurmasDoCursoAtual();
         }
 
-        // NOVO: Função para duplicar uma turma e suas disciplinas associadas
         function duplicarTurma(idTurmaOrigem, botao) {
             const cardOriginal = botao.closest('.card-turma');
             const idNovaTurma = 'turma_' + Date.now();
 
-            // Clona o elemento visual do card
             const novoCard = cardOriginal.cloneNode(true);
-            
-            // Atualiza o evento de clique para abrir a nova turma duplicada
             novoCard.setAttribute('onclick', `abrirDisciplinas('${idNovaTurma}', this)`);
 
-            // Atualiza a chamada do botão duplicar no novo card para o novo ID
             const btnDuplicar = novoCard.querySelector('.fa-copy')?.parentElement;
             if (btnDuplicar) {
                 btnDuplicar.setAttribute('onclick', `duplicarTurma('${idNovaTurma}', this)`);
             }
 
-            // Copia as disciplinas do objeto do curso atual para a nova turma
             if (cursoAtualId && dadosSistema[cursoAtualId] && dadosSistema[cursoAtualId].disciplinas) {
                 const disciplinasOrigem = dadosSistema[cursoAtualId].disciplinas[idTurmaOrigem] || '';
                 dadosSistema[cursoAtualId].disciplinas[idNovaTurma] = disciplinasOrigem;
             }
 
-            // Reseta o estado do botão de edição do card clonado
             const btnEdit = novoCard.querySelector('.btn-toggle-edit');
             if (btnEdit) {
                 btnEdit.querySelector('i').className = 'fa-solid fa-toggle-off text-lg';
             }
 
-            // Insere o novo card duplicado antes do botão "Nova Turma"
             document.getElementById('grid-turmas').insertBefore(novoCard, document.getElementById('btn-adicionar'));
 
-            // Habilita edição automaticamente para poder renomear/alterar
             if (btnEdit) {
                 toggleEdicao(btnEdit);
             }
@@ -602,26 +736,46 @@
             turmaAtualId = idTurma;
             document.getElementById('nome-turma-titulo').innerText = el ? el.querySelector('h2').innerText : 'TURMA';
             
-            const htmlDisc = dadosSistema[cursoAtualId]?.disciplinas?.[idTurma] || '';
-            document.getElementById('lista-disciplinas').innerHTML = htmlDisc;
+            carregarDisciplinasNaTela();
             
             document.getElementById('tela-turmas').classList.add('hidden');
             document.getElementById('tela-disciplinas').classList.remove('hidden');
+            atualizarLocalizacaoPresenca();
             inicializarDragAndDrop();
+        }
+
+        function carregarDisciplinasNaTela() {
+            const htmlDisc = dadosSistema[cursoAtualId]?.disciplinas?.[turmaAtualId] || '';
+            const container = document.getElementById('lista-disciplinas');
+            container.innerHTML = htmlDisc;
+
+            // Restaura estado dos selects nas disciplinas
+            container.querySelectorAll('.item-disciplina').forEach(item => {
+                const select = item.querySelector('select');
+                if (select) {
+                    const statusSalvo = select.getAttribute('data-status');
+                    if (statusSalvo) select.value = statusSalvo;
+                }
+            });
         }
 
         function voltarParaTurmas() {
             salvarDisciplinasAtual();
+            turmaAtualId = null;
             document.getElementById('tela-disciplinas').classList.add('hidden');
             document.getElementById('tela-turmas').classList.remove('hidden');
+            atualizarLocalizacaoPresenca();
         }
 
         function adicionarDisciplina() {
             const container = document.getElementById('lista-disciplinas'), novaDisc = document.createElement('div');
-            novaDisc.className = 'item-disciplina group bg-white px-3 py-1.5 rounded-lg border-2 border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-3 leading-tight relative';
+            novaDisc.className = 'item-disciplina group bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-3 leading-tight relative';
             novaDisc.innerHTML = `
                 <div class="flex items-center gap-2.5">
                     <i draggable="true" class="drag-handle fa-solid fa-grip-vertical text-slate-300 hover:text-slate-600 text-xs cursor-grab active:cursor-grabbing p-1"></i>
+                    <!-- BOLINHA DE STATUS CORRESPONDENTE AO LADO DO ARRASTAR -->
+                    <span class="bolinha-status w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0" title="Status"></span>
+                    
                     <div class="text-xs text-slate-700 flex items-center flex-wrap gap-x-1.5">
                         <strong class="campo-editavel text-sm font-semibold text-slate-900 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="Nova Disciplina" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)"></strong>
                         <span class="text-slate-300 hidden sm:inline">|</span>
@@ -635,7 +789,7 @@
                 </div>
                 <div onclick="event.stopPropagation()" class="acoes-disciplina opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm z-10">
                     <div class="relative opacity-30 hover:opacity-100 transition-opacity duration-150">
-                        <select onchange="alterarStatusBordaDisciplina(this)" class="text-[11px] rounded px-1 py-0.5 border border-slate-300 bg-white font-medium focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
+                        <select onchange="alterarStatusBordaDisciplina(this)" data-status="normal" class="text-[11px] rounded px-1 py-0.5 border border-slate-300 bg-white font-medium focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
                             <option value="normal">Sem instrutor</option>
                             <option value="sem-instrutor">Lotação não enviada</option>
                             <option value="confirmada">Lotação Enviada</option>
@@ -652,12 +806,26 @@
             salvarDisciplinasAtual();
         }
 
+        // CORREÇÃO: Atualiza a bolinha ao lado do arrastar e salva o atributo data-status para persistência da nomenclatura do select
         function alterarStatusBordaDisciplina(select) {
-            const item = select.closest('.item-disciplina'), val = select.value;
-            item.classList.remove('border-slate-200', 'border-amber-400', 'border-emerald-500');
-            if (val === 'sem-instrutor') item.classList.add('border-amber-400');
-            else if (val === 'confirmada') item.classList.add('border-emerald-500');
-            else item.classList.add('border-slate-200');
+            const item = select.closest('.item-disciplina');
+            const val = select.value;
+            const bolinha = item.querySelector('.bolinha-status');
+
+            // Persiste a escolha do select na tag do DOM
+            select.setAttribute('data-status', val);
+            select.querySelector(`option[value="${val}"]`)?.setAttribute('selected', 'selected');
+
+            // Altera a cor da bolinha ao lado do arrastar
+            bolinha.className = 'bolinha-status w-2.5 h-2.5 rounded-full shrink-0 transition-colors';
+            if (val === 'sem-instrutor') {
+                bolinha.classList.add('bg-amber-400');
+            } else if (val === 'confirmada') {
+                bolinha.classList.add('bg-emerald-500');
+            } else {
+                bolinha.classList.add('bg-slate-300');
+            }
+
             salvarDisciplinasAtual();
         }
 
