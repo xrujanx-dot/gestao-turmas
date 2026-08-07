@@ -912,6 +912,18 @@
             });
         }
 
+        // LÓGICA DE DIA SELECIONADO (QUADRADINHOS DE DIAS DA SEMANA)
+        function toggleDiaSemana(btn, e) {
+            e.stopPropagation();
+            btn.classList.toggle('bg-blue-600');
+            btn.classList.toggle('text-white');
+            btn.classList.toggle('border-blue-600');
+            btn.classList.toggle('bg-slate-50');
+            btn.classList.toggle('text-slate-500');
+            btn.classList.toggle('border-slate-200');
+            salvarTurmasDoCursoAtual();
+        }
+
         // LÓGICA DE TURMAS
         function adicionarTurma() {
             contadorTurmas++;
@@ -936,6 +948,18 @@
                         </select>
                     </div>
                     <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME TURMA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)" onblur="salvarTurmasDoCursoAtual(); carregarTurmasNaTela();"></h2>
+                    
+                    <!-- QUADRADINHOS MINIMALISTAS DOS DIAS DA SEMANA -->
+                    <div class="dias-semana-container flex items-center gap-1 my-2" onclick="event.stopPropagation()">
+                        <button type="button" onclick="toggleDiaSemana(this, event)" class="w-6 h-6 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 flex items-center justify-center transition-colors hover:border-blue-400">S</button>
+                        <button type="button" onclick="toggleDiaSemana(this, event)" class="w-6 h-6 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 flex items-center justify-center transition-colors hover:border-blue-400">T</button>
+                        <button type="button" onclick="toggleDiaSemana(this, event)" class="w-6 h-6 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 flex items-center justify-center transition-colors hover:border-blue-400">Q</button>
+                        <button type="button" onclick="toggleDiaSemana(this, event)" class="w-6 h-6 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 flex items-center justify-center transition-colors hover:border-blue-400">Q</button>
+                        <button type="button" onclick="toggleDiaSemana(this, event)" class="w-6 h-6 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 flex items-center justify-center transition-colors hover:border-blue-400">S</button>
+                        <button type="button" onclick="toggleDiaSemana(this, event)" class="w-6 h-6 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 flex items-center justify-center transition-colors hover:border-blue-400">S</button>
+                        <button type="button" onclick="toggleDiaSemana(this, event)" class="w-6 h-6 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 flex items-center justify-center transition-colors hover:border-blue-400">D</button>
+                    </div>
+
                     <div class="text-xs text-slate-500 mt-0.5 flex flex-col gap-0.5">
                         <div>Início: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)" onblur="salvarTurmasDoCursoAtual()"></span></div>
                         <div>Prev. Término: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)" onblur="salvarTurmasDoCursoAtual()"></span></div>
