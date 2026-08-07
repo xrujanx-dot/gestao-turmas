@@ -58,8 +58,8 @@
                     <div class="status-selector hidden mb-1" onclick="event.stopPropagation()">
                         <select onchange="atualizarStatus(this)" class="text-xs font-semibold rounded p-1 border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400">
                             <option value="Turma Ativa" selected>Turma Ativa</option>
-                            <option value="Em formação">Inicia em breve</option>
-                            <option value="Inicia em breve">Em processo de venda</option>
+                            <option value="Inicia em breve">Inicia em breve</option>
+                            <option value="Em processo de venda">Em processo de venda</option>
                         </select>
                     </div>
                     <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME TURMA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)">EDF21-N</h2>
@@ -272,12 +272,12 @@
                     <button onclick="removerTurma(this)" title="Excluir Turma" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
                 </div>
                 <div>
-                    <div class="status-container mb-1"><span class="badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded bg-amber-100 text-amber-800">Em formação</span></div>
+                    <div class="status-container mb-1"><span class="badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded bg-emerald-100 text-emerald-800">Turma Ativa</span></div>
                     <div class="status-selector hidden mb-1" onclick="event.stopPropagation()">
                         <select onchange="atualizarStatus(this)" class="text-xs font-semibold rounded p-1 border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400">
-                            <option value="Turma Ativa">Turma Ativa</option>
-                            <option value="Em formação" selected>Em formação</option>
+                            <option value="Turma Ativa" selected>Turma Ativa</option>
                             <option value="Inicia em breve">Inicia em breve</option>
+                            <option value="Em processo de venda">Em processo de venda</option>
                         </select>
                     </div>
                     <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME TURMA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)"></h2>
@@ -342,7 +342,7 @@
         function atualizarStatus(select) {
             const badge = select.closest('.card-turma').querySelector('.badge-status'), val = select.value;
             badge.innerText = val;
-            badge.className = `badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded ${val === 'Turma Ativa' ? 'bg-emerald-100 text-emerald-800' : val === 'Em formação' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'}`;
+            badge.className = `badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded ${val === 'Turma Ativa' ? 'bg-emerald-100 text-emerald-800' : val === 'Inicia em breve' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'}`;
             salvarDadosNoFirebase();
         }
 
@@ -431,9 +431,9 @@
                 <div onclick="event.stopPropagation()" class="acoes-disciplina opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm z-10">
                     <div class="relative opacity-30 hover:opacity-100 transition-opacity duration-150">
                         <select onchange="alterarStatusBordaDisciplina(this)" class="text-[11px] rounded px-1 py-0.5 border border-slate-300 bg-white font-medium focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
-                            <option value="normal">Normal</option>
-                            <option value="sem-instrutor">Sem Instrutor</option>
-                            <option value="confirmada">Confirmada</option>
+                            <option value="normal">Sem instrutor</option>
+                            <option value="sem-instrutor">Lotação não enviada</option>
+                            <option value="confirmada">Lotação Enviada</option>
                         </select>
                     </div>
                     <button onclick="toggleEdicaoDisciplina(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-toggle-off text-base"></i></button>
@@ -450,7 +450,7 @@
         function alterarStatusBordaDisciplina(select) {
             const item = select.closest('.item-disciplina'), val = select.value, instrutor = item.querySelector('.campo-instrutor');
             item.classList.remove('border-slate-200', 'border-amber-400', 'border-emerald-500');
-            if (val === 'sem-instrutor') { item.classList.add('border-amber-400'); if (instrutor) instrutor.innerText = 'Não consta'; }
+            if (val === 'sem-instrutor') { item.classList.add('border-amber-400'); }
             else if (val === 'confirmada') item.classList.add('border-emerald-500');
             else item.classList.add('border-slate-200');
             salvarDisciplinasAtual();
