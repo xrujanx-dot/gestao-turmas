@@ -100,6 +100,22 @@
             </div>
         </header>
 
+        <!-- Seção: Download de Dados da Turma (Transferida para a Aba das Turmas) -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
+            <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-file-arrow-down text-blue-600"></i> Baixar Informações da Turma (PDF / Texto)
+            </h4>
+            <p class="text-xs text-slate-500 mb-3">Selecione uma turma do curso ativo para gerar o resumo completo para download em texto.</p>
+            <div class="flex items-center gap-3 flex-wrap">
+                <select id="select-turma-download" class="text-xs p-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 min-w-[200px]">
+                    <!-- Opções carregadas via JS -->
+                </select>
+                <button onclick="baixarInformacoesTurmaTexto()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-download"></i> Baixar Resumo
+                </button>
+            </div>
+        </div>
+
         <div id="grid-turmas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <button id="btn-adicionar" onclick="adicionarTurma()" class="min-h-[11.5rem] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center gap-2 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all group">
                 <div class="w-10 h-10 rounded-full bg-slate-200 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
@@ -168,7 +184,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE CONFIGURAÇÕES (HISTÓRICO, TURMAS APAGADAS, DOWNLOAD PDF/TEXTO) -->
+    <!-- MODAL DE CONFIGURAÇÕES (HISTÓRICO, TURMAS APAGADAS) -->
     <div id="modal-configuracoes" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full p-6 border-2 border-slate-300 flex flex-col max-h-[90vh]">
             <div class="flex items-center justify-between border-b pb-3 mb-4">
@@ -179,23 +195,7 @@
             </div>
 
             <div class="overflow-y-auto custom-scrollbar flex-1 pr-1 flex flex-col gap-6">
-                <!-- Seção 1: Download de Dados da Turma -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-file-arrow-down text-blue-600"></i> Baixar Informações da Turma (PDF / Texto)
-                    </h4>
-                    <p class="text-xs text-slate-500 mb-3">Selecione uma turma do curso ativo para gerar o resumo completo para download em texto.</p>
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <select id="select-turma-download" class="text-xs p-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 min-w-[200px]">
-                            <!-- Opções carregadas via JS -->
-                        </select>
-                        <button onclick="baixarInformacoesTurmaTexto()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center gap-1.5">
-                            <i class="fa-solid fa-download"></i> Baixar Resumo
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Seção 2: Histórico de Edição -->
+                <!-- Seção 1: Histórico de Edição -->
                 <div>
                     <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
                         <i class="fa-solid fa-clock-rotate-left text-blue-600"></i> Histórico de Modificações do Usuário
@@ -217,7 +217,7 @@
                     </div>
                 </div>
 
-                <!-- Seção 3: Turmas Concluídas (Apagadas) -->
+                <!-- Seção 2: Turmas Concluídas (Apagadas) -->
                 <div>
                     <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
                         <i class="fa-solid fa-box-archive text-amber-600"></i> Registro de Turmas Concluídas / Apagadas
@@ -613,28 +613,6 @@
 
         // PAINEL DE CONFIGURAÇÕES
         function abrirModalConfiguracoes() {
-            // Preenche selects e tabelas
-            const selectTurma = document.getElementById('select-turma-download');
-            selectTurma.innerHTML = '';
-
-            if (cursoAtualId && dadosSistema[cursoAtualId] && dadosSistema[cursoAtualId].htmlTurmas) {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = dadosSistema[cursoAtualId].htmlTurmas;
-                const turmas = tempDiv.querySelectorAll('.card-turma');
-
-                turmas.forEach(card => {
-                    const nome = card.querySelector('h2')?.innerText.trim() || 'Sem Nome';
-                    const option = document.createElement('option');
-                    option.value = nome;
-                    option.innerText = nome;
-                    selectTurma.appendChild(option);
-                });
-            }
-
-            if (selectTurma.children.length === 0) {
-                selectTurma.innerHTML = `<option value="">Nenhuma turma disponível neste curso</option>`;
-            }
-
             // Tabela Histórico
             const tabelaHist = document.getElementById('tabela-historico-edicao');
             tabelaHist.innerHTML = '';
@@ -757,6 +735,27 @@
                 grid.innerHTML = dadosSistema[cursoAtualId].htmlTurmas;
             }
             grid.appendChild(btnAdd);
+
+            // Popula o select de download de turmas na tela de Turmas
+            const selectTurma = document.getElementById('select-turma-download');
+            if (selectTurma) {
+                selectTurma.innerHTML = '';
+                const turmas = grid.querySelectorAll('.card-turma');
+
+                turmas.forEach(card => {
+                    const nome = card.querySelector('h2')?.innerText.trim();
+                    if (nome) {
+                        const option = document.createElement('option');
+                        option.value = nome;
+                        option.innerText = nome;
+                        selectTurma.appendChild(option);
+                    }
+                });
+
+                if (selectTurma.children.length === 0) {
+                    selectTurma.innerHTML = `<option value="">Nenhuma turma disponível neste curso</option>`;
+                }
+            }
         }
 
         function voltarParaCursos() {
@@ -941,7 +940,7 @@
                             <option value="Em processo de venda">Em processo de venda</option>
                         </select>
                     </div>
-                    <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME TURMA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)" onblur="salvarTurmasDoCursoAtual()"></h2>
+                    <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME TURMA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)" onblur="salvarTurmasDoCursoAtual(); carregarTurmasNaTela();"></h2>
                     <div class="text-xs text-slate-500 mt-0.5 flex flex-col gap-0.5">
                         <div>Início: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)" onblur="salvarTurmasDoCursoAtual()"></span></div>
                         <div>Prev. Término: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)" onblur="salvarTurmasDoCursoAtual()"></span></div>
@@ -972,6 +971,7 @@
             toggleEdicao(novoCard.querySelector('.btn-toggle-edit'));
             novoCard.querySelector('.campo-editavel')?.focus();
             salvarTurmasDoCursoAtual();
+            carregarTurmasNaTela();
         }
 
         function duplicarTurma(idTurmaOrigem, botao) {
@@ -1003,6 +1003,7 @@
             }
 
             salvarTurmasDoCursoAtual();
+            carregarTurmasNaTela();
         }
 
         function toggleEdicao(botao) {
@@ -1026,6 +1027,7 @@
             else juncaoTexto.classList.add('hidden');
 
             salvarTurmasDoCursoAtual();
+            carregarTurmasNaTela();
         }
 
         function verificarEnter(e) {
@@ -1097,6 +1099,7 @@
 
                 cardParaRemover.remove(); 
                 salvarTurmasDoCursoAtual(); 
+                carregarTurmasNaTela();
             }
             fecharModalExclusao();
         }
@@ -1177,6 +1180,7 @@
             document.getElementById('tela-disciplinas').classList.add('hidden');
             document.getElementById('tela-turmas').classList.remove('hidden');
             atualizarLocalizacaoPresenca();
+            carregarTurmasNaTela();
         }
 
         function adicionarDisciplina() {
