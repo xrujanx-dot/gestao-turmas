@@ -8,6 +8,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK (v9 via CDN Modular / Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <style>
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
@@ -27,10 +33,21 @@
 
     <!-- ================= TELA PRINCIPAL: PAINEL DE TURMAS ================= -->
     <div id="tela-turmas" class="max-w-7xl mx-auto">
-        <!-- Cabeçalho -->
-        <header class="mb-8 border-b pb-4">
-            <h1 class="text-3xl font-bold text-slate-900">Setor de Turmas</h1>
-            <p class="text-slate-600">Painel de organização do Grau Técnico</p>
+        <!-- Cabeçalho com Botão de Login Firebase -->
+        <header class="mb-8 border-b pb-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900">Setor de Turmas</h1>
+                <p class="text-slate-600">Painel de organização do Grau Técnico</p>
+            </div>
+            <div id="auth-container" class="flex items-center gap-3">
+                <button onclick="fazerLoginGoogle()" id="btn-login" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2 px-4 border border-slate-300 rounded-lg shadow-sm flex items-center gap-2 text-sm transition-colors">
+                    <i class="fa-brands fa-google text-red-500"></i> Entrar com Google
+                </button>
+                <div id="user-info" class="hidden flex items-center gap-3">
+                    <span id="user-name" class="text-xs font-semibold text-slate-700"></span>
+                    <button onclick="fazerLogout()" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-medium py-1.5 px-3 rounded-lg transition-colors">Sair</button>
+                </div>
+            </div>
         </header>
 
         <!-- Container Grid (4 Colunas no Desktop) -->
@@ -220,8 +237,91 @@
         </div>
     </div>
 
-    <!-- Lógica em JavaScript -->
+    <!-- Lógica em JavaScript e Firebase -->
     <script>
+        // Configuração do seu projeto Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5qVMY7E-VSvXnvlwgbUuW9vi7NHtLCdA",
+            authDomain: "gestao-turmas-923ba.firebaseapp.com",
+            projectId: "gestao-turmas-923ba",
+            storageBucket: "gestao-turmas-923ba.firebasestorage.app",
+            messagingSenderId: "883801242126",
+            appId: "1:883801242126:web:98300a8f4eb3c671561a5f"
+        };
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        let usuarioAtual = null;
+
+        // Função para realizar Login com o Google
+        function fazerLoginGoogle() {
+            auth.signInWithPopup(provider).catch((error) => {
+                alert("Erro ao fazer login: " + error.message);
+            });
+        }
+
+        // Função para fazer Logout
+        function fazerLogout() {
+            auth.signOut();
+        }
+
+        // Monitora o estado de autenticação do usuário
+        auth.onAuthStateChanged((user) => {
+            const btnLogin = document.getElementById('btn-login');
+            const userInfo = document.getElementById('user-info');
+            const userName = document.getElementById('user-name');
+
+            if (user) {
+                usuarioAtual = user;
+                if (btnLogin) btnLogin.classList.add('hidden');
+                if (userInfo) userInfo.classList.remove('hidden');
+                if (userName) userName.innerText = user.displayName;
+                console.log("Usuário logado:", user.displayName);
+                carregarDadosDoFirebase();
+            } else {
+                usuarioAtual = null;
+                if (btnLogin) btnLogin.classList.remove('hidden');
+                if (userInfo) userInfo.classList.add('hidden');
+                console.log("Nenhum usuário logado.");
+            }
+        });
+
+        // Salva os dados automaticamente no Cloud Firestore
+        function salvarDadosNoFirebase() {
+            if (!usuarioAtual) return; // Só salva se estiver logado
+
+            const dadosSalvar = {
+                turmasDisciplinasData: turmasDisciplinasData,
+                gridTurmasHTML: document.getElementById('grid-turmas').innerHTML,
+                ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            db.collection('usuarios').doc(usuarioAtual.uid).set(dadosSalvar)
+                .then(() => console.log("Dados salvos automaticamente na nuvem!"))
+                .catch((err) => console.error("Erro ao salvar:", err));
+        }
+
+        // Carrega os dados salvos na nuvem para a tela do usuário
+        function carregarDadosDoFirebase() {
+            if (!usuarioAtual) return;
+
+            db.collection('usuarios').doc(usuarioAtual.uid).get().then((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.turmasDisciplinasData) {
+                        turmasDisciplinasData = data.turmasDisciplinasData;
+                    }
+                    if (data.gridTurmasHTML) {
+                        document.getElementById('grid-turmas').innerHTML = data.gridTurmasHTML;
+                    }
+                }
+            });
+        }
+
         let cardParaRemover = null;
         let intervaloTimer = null;
 
@@ -238,6 +338,7 @@
                 const container = document.getElementById('lista-disciplinas');
                 turmasDisciplinasData[turmaAtualId] = container.innerHTML;
             }
+            salvarDadosNoFirebase();
         }
 
         // Força a letra maiúscula no código da turma e mantém a posição do cursor
@@ -261,6 +362,7 @@
                     selection.addRange(newRange);
                 }
             }
+            salvarDadosNoFirebase();
         }
 
         // Máscara de data automática para elementos com contenteditable
@@ -370,6 +472,7 @@
             `;
 
             grid.insertBefore(novoCard, btnAdicionar);
+            salvarDadosNoFirebase();
         }
 
         // Liga/Desliga o modo de edição do card de turma
@@ -425,6 +528,7 @@
                 juncaoInput.classList.remove('hidden');
                 juncaoTexto.classList.add('hidden');
             }
+            salvarDadosNoFirebase();
         }
 
         // Finaliza a edição do card ao teclar Enter
@@ -515,6 +619,7 @@
             } else if (valor === 'Inicia em breve') {
                 badge.className = 'badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded bg-slate-200 text-slate-700';
             }
+            salvarDadosNoFirebase();
         }
 
         // Atualiza a exibição do texto do turno
@@ -522,6 +627,7 @@
             const card = select.closest('.card-turma');
             const texto = card.querySelector('.turno-texto');
             texto.innerText = select.value;
+            salvarDadosNoFirebase();
         }
 
         // Atualiza a informação de junção de turmas
@@ -529,6 +635,7 @@
             const card = input.closest('.card-turma');
             const codigoSpan = card.querySelector('.juncao-codigo');
             codigoSpan.innerText = input.value.toUpperCase();
+            salvarDadosNoFirebase();
         }
 
         // Prepara remoção e exibe o modal
@@ -579,6 +686,7 @@
         function confirmarExclusao() {
             if (cardParaRemover) {
                 cardParaRemover.remove();
+                salvarDadosNoFirebase();
             }
             fecharModalExclusao();
         }
