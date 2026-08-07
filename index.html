@@ -90,7 +90,7 @@
 
     <!-- TELA 2: TURMAS -->
     <div id="tela-turmas" class="max-w-7xl mx-auto hidden">
-        <header class="mb-8 border-b pb-4 flex justify-between items-center">
+        <header class="mb-8 border-b pb-4 flex justify-between items-center gap-4 flex-wrap">
             <div>
                 <button onclick="voltarParaCursos()" class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-2 transition-colors">
                     <i class="fa-solid fa-arrow-left"></i> Voltar para Cursos
@@ -98,23 +98,18 @@
                 <h1 id="titulo-curso-atual" class="text-3xl font-bold text-slate-900 uppercase">Turmas do Curso</h1>
                 <p class="text-slate-600">Painel de organização do Grau Técnico - Montese</p>
             </div>
-        </header>
 
-        <!-- Seção: Download de Dados da Turma (Transferida para a Aba das Turmas) -->
-        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
-            <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                <i class="fa-solid fa-file-arrow-down text-blue-600"></i> Baixar Informações da Turma (PDF / Texto)
-            </h4>
-            <p class="text-xs text-slate-500 mb-3">Selecione uma turma do curso ativo para gerar o resumo completo para download em texto.</p>
-            <div class="flex items-center gap-3 flex-wrap">
-                <select id="select-turma-download" class="text-xs p-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 min-w-[200px]">
+            <!-- Botão Minimalista de Download com Seletor Integrado no Canto Superior Direito -->
+            <div class="flex items-center gap-2 bg-white border border-slate-200 p-1.5 rounded-xl shadow-sm">
+                <i class="fa-solid fa-file-arrow-down text-blue-600 ml-2 text-sm"></i>
+                <select id="select-turma-download" class="text-xs p-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[180px] font-medium text-slate-700">
                     <!-- Opções carregadas via JS -->
                 </select>
-                <button onclick="baixarInformacoesTurmaTexto()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center gap-1.5">
-                    <i class="fa-solid fa-download"></i> Baixar Resumo
+                <button onclick="baixarInformacoesTurmaTexto()" title="Baixar Resumo da Turma" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-download"></i> Baixar
                 </button>
             </div>
-        </div>
+        </header>
 
         <div id="grid-turmas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <button id="btn-adicionar" onclick="adicionarTurma()" class="min-h-[11.5rem] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center gap-2 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all group">
