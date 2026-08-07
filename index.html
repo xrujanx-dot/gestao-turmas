@@ -3,41 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Turmas - Colégio Técnico</title>
-    <!-- CSS Moderno (Tailwind) direto via CDN -->
+    <title>Gestão de Turmas - Grau Técnico Montese</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Firebase SDK (v9 via CDN Modular / Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1;
-            border-radius: 4px;
-        }
-        /* Estilo para item sendo arrastado */
-        .dragging {
-            opacity: 0.4;
-            border: 2px dashed #3b82f6 !important;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .dragging { opacity: 0.4; border: 2px dashed #3b82f6 !important; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen p-8 text-slate-800">
 
-    <!-- ================= TELA PRINCIPAL: PAINEL DE TURMAS ================= -->
+    <!-- TELA PRINCIPAL: TURMAS -->
     <div id="tela-turmas" class="max-w-7xl mx-auto">
-        <!-- Cabeçalho com Botão de Login Firebase -->
         <header class="mb-8 border-b pb-4 flex justify-between items-center">
             <div>
                 <h1 class="text-3xl font-bold text-slate-900">Setor de Turmas</h1>
-                <p class="text-slate-600">Painel de organização do Grau Técnico</p>
+                <p class="text-slate-600">Painel de organização do Grau Técnico - Montese</p>
             </div>
             <div id="auth-container" class="flex items-center gap-3">
                 <button onclick="fazerLoginGoogle()" id="btn-login" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2 px-4 border border-slate-300 rounded-lg shadow-sm flex items-center gap-2 text-sm transition-colors">
@@ -50,29 +37,16 @@
             </div>
         </header>
 
-        <!-- Container Grid (4 Colunas no Desktop) -->
         <div id="grid-turmas" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            
-            <!-- Card Inicial (Turma 1) -->
             <div onclick="abrirDisciplinas('turma_1', this)" class="card-turma group bg-white rounded-xl shadow-md p-4 border border-slate-200 hover:shadow-lg transition-all relative flex flex-col justify-between min-h-[11.5rem] cursor-pointer">
-                
-                <!-- Ações do topo (Editar / Excluir) -->
                 <div onclick="event.stopPropagation()" class="acoes-card opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute top-3 right-3 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm z-10">
-                    <button onclick="toggleEdicao(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors">
-                        <i class="fa-solid fa-toggle-off text-lg"></i>
-                    </button>
-                    <button onclick="removerTurma(this)" title="Excluir Turma" class="text-slate-400 hover:text-red-500 transition-colors">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
+                    <button onclick="toggleEdicao(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-toggle-off text-lg"></i></button>
+                    <button onclick="removerTurma(this)" title="Excluir Turma" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
                 </div>
-
                 <div>
-                    <!-- Visualização do Status -->
                     <div class="status-container mb-1">
                         <span class="badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded bg-emerald-100 text-emerald-800">Turma Ativa</span>
                     </div>
-
-                    <!-- Edição do Status (Oculto Inicialmente) -->
                     <div class="status-selector hidden mb-1" onclick="event.stopPropagation()">
                         <select onchange="atualizarStatus(this)" class="text-xs font-semibold rounded p-1 border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400">
                             <option value="Turma Ativa" selected>Turma Ativa</option>
@@ -80,17 +54,11 @@
                             <option value="Inicia em breve">Inicia em breve</option>
                         </select>
                     </div>
-
-                    <!-- Código da Turma -->
                     <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)">EDF21-N</h2>
-                    
-                    <!-- Datas de Início e Previsão de Término -->
                     <div class="text-xs text-slate-500 mt-0.5 flex flex-col gap-0.5">
                         <div>Início: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)">01/02/2026</span></div>
                         <div>Prev. Término: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)">20/12/2026</span></div>
                     </div>
-
-                    <!-- Junção de Turma -->
                     <div class="juncao-container text-xs text-indigo-600 font-medium mt-1">
                         <span class="juncao-texto hidden"><i class="fa-solid fa-code-merge mr-1"></i>Junta com: <strong class="juncao-codigo"></strong></span>
                         <div class="juncao-input hidden mt-0.5" onclick="event.stopPropagation()">
@@ -99,8 +67,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Rodapé do Card -->
                 <div class="flex justify-between items-center text-xs text-slate-400 border-t pt-2 border-slate-100 mt-2">
                     <div>
                         <span class="turno-texto">Noturno</span>
@@ -114,20 +80,17 @@
                 </div>
             </div>
 
-            <!-- Botão de Adicionar (+) -->
             <button id="btn-adicionar" onclick="adicionarTurma()" class="min-h-[11.5rem] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center gap-2 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all group">
                 <div class="w-10 h-10 rounded-full bg-slate-200 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
                     <i class="fa-solid fa-plus text-lg"></i>
                 </div>
                 <span class="font-medium text-sm">Nova Turma</span>
             </button>
-
         </div>
     </div>
 
-    <!-- ================= TELA SECUNDÁRIA: LISTA DE DISCIPLINAS ================= -->
+    <!-- TELA SECUNDÁRIA: DISCIPLINAS -->
     <div id="tela-disciplinas" class="max-w-5xl mx-auto hidden">
-        <!-- Cabeçalho de Navegação -->
         <header class="mb-6 border-b pb-4 flex items-center justify-between">
             <div>
                 <button onclick="voltarParaTurmas()" class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-2 transition-colors">
@@ -144,10 +107,7 @@
             <i class="fa-solid fa-grip-vertical text-slate-400"></i> Arraste pelo ícone de pontinhos para reordenar a sequência das disciplinas.
         </p>
 
-        <!-- Container das Disciplinas em Retângulos Super Compactos -->
         <div id="lista-disciplinas" class="flex flex-col gap-1.5">
-            
-            <!-- Exemplo de Disciplina 1 -->
             <div class="item-disciplina group bg-white px-3 py-1.5 rounded-lg border-2 border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-3 leading-tight relative">
                 <div class="flex items-center gap-2.5">
                     <i draggable="true" class="drag-handle fa-solid fa-grip-vertical text-slate-300 hover:text-slate-600 text-xs cursor-grab active:cursor-grabbing p-1"></i>
@@ -157,13 +117,11 @@
                         <span class="text-slate-600">Instrutor (a): <strong class="campo-instrutor campo-editavel font-medium text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)">Jean</strong></span>
                         <span class="text-slate-300 hidden sm:inline">|</span>
                         <span class="text-slate-500 text-xs flex items-center gap-1">
-                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">12/05/2026</span>
-                            a
+                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">12/05/2026</span> a
                             <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">21/07/2026</span>
                         </span>
                     </div>
                 </div>
-
                 <div onclick="event.stopPropagation()" class="acoes-disciplina opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm z-10">
                     <div class="relative opacity-30 hover:opacity-100 transition-opacity duration-150">
                         <select onchange="alterarStatusBordaDisciplina(this)" class="text-[11px] rounded px-1 py-0.5 border border-slate-300 bg-white font-medium focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
@@ -172,61 +130,19 @@
                             <option value="confirmada">Confirmada</option>
                         </select>
                     </div>
-                    <button onclick="toggleEdicaoDisciplina(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors">
-                        <i class="fa-solid fa-toggle-off text-base"></i>
-                    </button>
-                    <button onclick="removerDisciplina(this)" title="Excluir Disciplina" class="text-slate-400 hover:text-red-500 transition-colors px-0.5">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                    </button>
+                    <button onclick="toggleEdicaoDisciplina(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-toggle-off text-base"></i></button>
+                    <button onclick="removerDisciplina(this)" title="Excluir Disciplina" class="text-slate-400 hover:text-red-500 transition-colors px-0.5"><i class="fa-solid fa-trash-can text-xs"></i></button>
                 </div>
             </div>
-
-            <!-- Exemplo de Disciplina 2 -->
-            <div class="item-disciplina group bg-white px-3 py-1.5 rounded-lg border-2 border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-3 leading-tight relative">
-                <div class="flex items-center gap-2.5">
-                    <i draggable="true" class="drag-handle fa-solid fa-grip-vertical text-slate-300 hover:text-slate-600 text-xs cursor-grab active:cursor-grabbing p-1"></i>
-                    <div class="text-xs text-slate-700 flex items-center flex-wrap gap-x-1.5">
-                        <strong class="campo-editavel text-sm font-semibold text-slate-900 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)">Gestão Financeira</strong>
-                        <span class="text-slate-300 hidden sm:inline">|</span>
-                        <span class="text-slate-600">Instrutor (a): <strong class="campo-instrutor campo-editavel font-medium text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)">Lucia</strong></span>
-                        <span class="text-slate-300 hidden sm:inline">|</span>
-                        <span class="text-slate-500 text-xs flex items-center gap-1">
-                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">22/07/2026</span>
-                            a
-                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">30/09/2026</span>
-                        </span>
-                    </div>
-                </div>
-
-                <div onclick="event.stopPropagation()" class="acoes-disciplina opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm z-10">
-                    <div class="relative opacity-30 hover:opacity-100 transition-opacity duration-150">
-                        <select onchange="alterarStatusBordaDisciplina(this)" class="text-[11px] rounded px-1 py-0.5 border border-slate-300 bg-white font-medium focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
-                            <option value="normal">Normal</option>
-                            <option value="sem-instrutor">Sem Instrutor</option>
-                            <option value="confirmada">Confirmada</option>
-                        </select>
-                    </div>
-                    <button onclick="toggleEdicaoDisciplina(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors">
-                        <i class="fa-solid fa-toggle-off text-base"></i>
-                    </button>
-                    <button onclick="removerDisciplina(this)" title="Excluir Disciplina" class="text-slate-400 hover:text-red-500 transition-colors px-0.5">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                    </button>
-                </div>
-            </div>
-
         </div>
     </div>
 
-    <!-- Modal de Alerta de Exclusão -->
+    <!-- MODAL DE EXCLUSÃO -->
     <div id="modal-excluir" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-100">
-            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
-                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
-            </div>
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4"><i class="fa-solid fa-triangle-exclamation text-2xl"></i></div>
             <h3 class="text-xl font-bold text-slate-900 mb-2">Atenção! Apagar Turma</h3>
-            <p id="modal-texto-alerta" class="text-sm text-slate-600 mb-6">Esta ação removerá a turma do sistema. Certifique-se de que realmente deseja prosseguir.</p>
-            
+            <p id="modal-texto-alerta" class="text-sm text-slate-600 mb-6">Esta ação removerá a turma do sistema.</p>
             <div class="flex justify-end gap-3">
                 <button onclick="fecharModalExclusao()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
                 <button id="btn-confirmar-excluir" onclick="confirmarExclusao()" class="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -237,9 +153,8 @@
         </div>
     </div>
 
-    <!-- Lógica em JavaScript e Firebase -->
     <script>
-        // Configuração do seu projeto Firebase
+        // Firebase Configuração
         const firebaseConfig = {
             apiKey: "AIzaSyB5qVMY7E-VSvXnvlwgbUuW9vi7NHtLCdA",
             authDomain: "gestao-turmas-923ba.firebaseapp.com",
@@ -249,146 +164,81 @@
             appId: "1:883801242126:web:98300a8f4eb3c671561a5f"
         };
 
-        // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const provider = new firebase.auth.GoogleAuthProvider();
+        const auth = firebase.auth(), db = firebase.firestore(), provider = new firebase.auth.GoogleAuthProvider();
+        let usuarioAtual = null, cardParaRemover = null, intervaloTimer = null, turmaAtualId = null, contadorTurmas = 1;
+        let turmasDisciplinasData = { 'turma_1': document.getElementById('lista-disciplinas').innerHTML };
 
-        let usuarioAtual = null;
+        // Autenticação
+        const fazerLoginGoogle = () => auth.signInWithPopup(provider).catch(e => alert("Erro ao fazer login: " + e.message));
+        const fazerLogout = () => auth.signOut();
 
-        // Função para realizar Login com o Google
-        function fazerLoginGoogle() {
-            auth.signInWithPopup(provider).catch((error) => {
-                alert("Erro ao fazer login: " + error.message);
-            });
-        }
-
-        // Função para fazer Logout
-        function fazerLogout() {
-            auth.signOut();
-        }
-
-        // Monitora o estado de autenticação do usuário
-        auth.onAuthStateChanged((user) => {
-            const btnLogin = document.getElementById('btn-login');
-            const userInfo = document.getElementById('user-info');
-            const userName = document.getElementById('user-name');
-
+        auth.onAuthStateChanged(user => {
+            const btnLogin = document.getElementById('btn-login'), userInfo = document.getElementById('user-info'), userName = document.getElementById('user-name');
+            usuarioAtual = user;
             if (user) {
-                usuarioAtual = user;
-                if (btnLogin) btnLogin.classList.add('hidden');
-                if (userInfo) userInfo.classList.remove('hidden');
+                btnLogin?.classList.add('hidden');
+                userInfo?.classList.remove('hidden');
                 if (userName) userName.innerText = user.displayName;
-                console.log("Usuário logado:", user.displayName);
                 carregarDadosDoFirebase();
             } else {
-                usuarioAtual = null;
-                if (btnLogin) btnLogin.classList.remove('hidden');
-                if (userInfo) userInfo.classList.add('hidden');
-                console.log("Nenhum usuário logado.");
+                btnLogin?.classList.remove('hidden');
+                userInfo?.classList.add('hidden');
             }
         });
 
-        // Salva os dados automaticamente no Cloud Firestore
+        // Persistência Firebase
         function salvarDadosNoFirebase() {
-            if (!usuarioAtual) return; // Só salva se estiver logado
-
-            const dadosSalvar = {
-                turmasDisciplinasData: turmasDisciplinasData,
+            if (!usuarioAtual) return;
+            db.collection('usuarios').doc(usuarioAtual.uid).set({
+                turmasDisciplinasData,
                 gridTurmasHTML: document.getElementById('grid-turmas').innerHTML,
                 ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            db.collection('usuarios').doc(usuarioAtual.uid).set(dadosSalvar)
-                .then(() => console.log("Dados salvos automaticamente na nuvem!"))
-                .catch((err) => console.error("Erro ao salvar:", err));
+            }).catch(err => console.error("Erro ao salvar:", err));
         }
 
-        // Carrega os dados salvos na nuvem para a tela do usuário
         function carregarDadosDoFirebase() {
             if (!usuarioAtual) return;
-
-            db.collection('usuarios').doc(usuarioAtual.uid).get().then((doc) => {
+            db.collection('usuarios').doc(usuarioAtual.uid).get().then(doc => {
                 if (doc.exists) {
                     const data = doc.data();
-                    if (data.turmasDisciplinasData) {
-                        turmasDisciplinasData = data.turmasDisciplinasData;
-                    }
-                    if (data.gridTurmasHTML) {
-                        document.getElementById('grid-turmas').innerHTML = data.gridTurmasHTML;
-                    }
+                    if (data.turmasDisciplinasData) turmasDisciplinasData = data.turmasDisciplinasData;
+                    if (data.gridTurmasHTML) document.getElementById('grid-turmas').innerHTML = data.gridTurmasHTML;
                 }
             });
         }
 
-        let cardParaRemover = null;
-        let intervaloTimer = null;
-
-        // Armazenamento independente das disciplinas de cada turma
-        let turmasDisciplinasData = {
-            'turma_1': document.getElementById('lista-disciplinas').innerHTML
-        };
-        let turmaAtualId = null;
-        let contadorTurmas = 1;
-
-        // Salva o estado atual do HTML do container de disciplinas na turma ativa
         function salvarDisciplinasAtual() {
-            if (turmaAtualId) {
-                const container = document.getElementById('lista-disciplinas');
-                turmasDisciplinasData[turmaAtualId] = container.innerHTML;
-            }
+            if (turmaAtualId) turmasDisciplinasData[turmaAtualId] = document.getElementById('lista-disciplinas').innerHTML;
             salvarDadosNoFirebase();
         }
 
-        // Força a letra maiúscula no código da turma e mantém a posição do cursor
-        function forcarMaiuscula(event) {
-            const el = event.target;
-            const originalText = el.innerText;
-            const upperText = originalText.toUpperCase();
-            
-            if (originalText !== upperText) {
-                const selection = window.getSelection();
-                const range = selection.getRangeAt(0);
-                const pos = range.startOffset;
-                
-                el.innerText = upperText;
-                
+        // Formatação de Campos
+        function forcarMaiuscula(e) {
+            const el = e.target, original = el.innerText, upper = original.toUpperCase();
+            if (original !== upper) {
+                const sel = window.getSelection(), range = sel.getRangeAt(0), pos = range.startOffset;
+                el.innerText = upper;
                 if (el.childNodes.length > 0) {
                     const newRange = document.createRange();
                     newRange.setStart(el.childNodes[0], pos);
                     newRange.collapse(true);
-                    selection.removeAllRanges();
-                    selection.addRange(newRange);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
                 }
             }
             salvarDadosNoFirebase();
         }
 
-        // Máscara de data automática para elementos com contenteditable
-        function aplicarMascaraData(event) {
-            const el = event.target;
-            let val = el.innerText.replace(/\D/g, ''); // Remove o que não for número
-
-            if (val.length > 8) val = val.substring(0, 8); // Limita em 8 dígitos (DDMMYYYY)
-
-            let formatado = '';
-            if (val.length > 0) {
-                formatado += val.substring(0, 2);
-                if (val.length > 2) {
-                    formatado += '/' + val.substring(2, 4);
-                    if (val.length > 4) {
-                        formatado += '/' + val.substring(4, 8);
-                    }
-                }
-            }
-
-            el.innerText = formatado;
-
-            // Mantém o cursor sempre no final do texto durante a digitação
-            const range = document.createRange();
+        function aplicarMascaraData(e) {
+            const el = e.target;
+            let val = el.innerText.replace(/\D/g, '').substring(0, 8);
+            let fmt = val.length > 0 ? val.substring(0, 2) + (val.length > 2 ? '/' + val.substring(2, 4) + (val.length > 4 ? '/' + val.substring(4, 8) : '') : '') : '';
+            el.innerText = fmt;
+            
             const sel = window.getSelection();
             if (el.childNodes.length > 0) {
+                const range = document.createRange();
                 range.setStart(el.childNodes[0], el.innerText.length);
                 range.collapse(true);
                 sel.removeAllRanges();
@@ -397,43 +247,24 @@
             salvarDisciplinasAtual();
         }
 
-        // Impede a navegação ao clicar em elementos editáveis
-        function interceptaCliqueEditavel(event) {
-            const el = event.currentTarget;
-            if (el.getAttribute('contenteditable') === 'true') {
-                event.stopPropagation();
-            }
-        }
+        const interceptaCliqueEditavel = e => e.currentTarget.getAttribute('contenteditable') === 'true' && e.stopPropagation();
 
-        // Adiciona uma nova turma ao painel
+        // Lógica de Turmas
         function adicionarTurma() {
             contadorTurmas++;
             const idNovaTurma = 'turma_' + contadorTurmas;
-            
-            // Inicializa essa nova turma com o container de disciplinas completamente vazio
             turmasDisciplinasData[idNovaTurma] = '';
-
-            const grid = document.getElementById('grid-turmas');
-            const btnAdicionar = document.getElementById('btn-adicionar');
 
             const novoCard = document.createElement('div');
             novoCard.className = 'card-turma group bg-white rounded-xl shadow-md p-4 border border-slate-200 hover:shadow-lg transition-all relative flex flex-col justify-between min-h-[11.5rem] cursor-pointer';
             novoCard.setAttribute('onclick', `abrirDisciplinas('${idNovaTurma}', this)`);
             novoCard.innerHTML = `
                 <div onclick="event.stopPropagation()" class="acoes-card opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute top-3 right-3 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm z-10">
-                    <button onclick="toggleEdicao(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors">
-                        <i class="fa-solid fa-toggle-off text-lg"></i>
-                    </button>
-                    <button onclick="removerTurma(this)" title="Excluir Turma" class="text-slate-400 hover:text-red-500 transition-colors">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
+                    <button onclick="toggleEdicao(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-toggle-off text-lg"></i></button>
+                    <button onclick="removerTurma(this)" title="Excluir Turma" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
                 </div>
-
                 <div>
-                    <div class="status-container mb-1">
-                        <span class="badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded bg-amber-100 text-amber-800">Em formação</span>
-                    </div>
-
+                    <div class="status-container mb-1"><span class="badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded bg-amber-100 text-amber-800">Em formação</span></div>
                     <div class="status-selector hidden mb-1" onclick="event.stopPropagation()">
                         <select onchange="atualizarStatus(this)" class="text-xs font-semibold rounded p-1 border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400">
                             <option value="Turma Ativa">Turma Ativa</option>
@@ -441,14 +272,11 @@
                             <option value="Inicia em breve">Inicia em breve</option>
                         </select>
                     </div>
-
                     <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)">NOME TURMA</h2>
-                    
                     <div class="text-xs text-slate-500 mt-0.5 flex flex-col gap-0.5">
                         <div>Início: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)">DD/MM/AAAA</span></div>
                         <div>Prev. Término: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)">DD/MM/AAAA</span></div>
                     </div>
-
                     <div class="juncao-container text-xs text-indigo-600 font-medium mt-1">
                         <span class="juncao-texto hidden"><i class="fa-solid fa-code-merge mr-1"></i>Junta com: <strong class="juncao-codigo"></strong></span>
                         <div class="juncao-input hidden mt-0.5" onclick="event.stopPropagation()">
@@ -457,223 +285,91 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="flex justify-between items-center text-xs text-slate-400 border-t pt-2 border-slate-100 mt-2">
                     <div>
                         <span class="turno-texto">Noturno</span>
                         <select onchange="atualizarTurno(this)" onclick="event.stopPropagation()" class="turno-selector hidden text-xs rounded p-0.5 border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400">
-                            <option value="Matutino">Matutino</option>
-                            <option value="Vespertino">Vespertino</option>
-                            <option value="Noturno" selected>Noturno</option>
+                            <option value="Matutino">Matutino</option><option value="Vespertino">Vespertino</option><option value="Noturno" selected>Noturno</option>
                         </select>
                     </div>
                     <span class="campo-editavel outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)">0 Alunos</span>
-                </div>
-            `;
+                </div>`;
 
-            grid.insertBefore(novoCard, btnAdicionar);
+            document.getElementById('grid-turmas').insertBefore(novoCard, document.getElementById('btn-adicionar'));
             salvarDadosNoFirebase();
         }
 
-        // Liga/Desliga o modo de edição do card de turma
         function toggleEdicao(botao) {
-            const card = botao.closest('.card-turma');
-            const acoes = card.querySelector('.acoes-card');
-            const icone = botao.querySelector('i');
-            const campos = card.querySelectorAll('.campo-editavel');
-            const statusContainer = card.querySelector('.status-container');
-            const statusSelector = card.querySelector('.status-selector');
-            const juncaoInput = card.querySelector('.juncao-input');
-            const juncaoTexto = card.querySelector('.juncao-texto');
-            const turnoTexto = card.querySelector('.turno-texto');
-            const turnoSelector = card.querySelector('.turno-selector');
+            const card = botao.closest('.card-turma'), acoes = card.querySelector('.acoes-card'), icone = botao.querySelector('i');
+            const editando = icone.classList.contains('fa-toggle-on');
 
-            const modoEdicaoAtivo = icone.classList.contains('fa-toggle-on');
+            icone.className = editando ? 'fa-solid fa-toggle-off text-lg' : 'fa-solid fa-toggle-on text-lg';
+            botao.classList.toggle('text-blue-600', !editando);
+            botao.classList.toggle('text-slate-400', editando);
+            acoes.classList.toggle('!opacity-100', !editando);
 
-            if (modoEdicaoAtivo) {
-                // DESLIGAR EDIÇÃO
-                icone.className = 'fa-solid fa-toggle-off text-lg';
-                botao.classList.remove('text-blue-600');
-                botao.classList.add('text-slate-400');
-                
-                acoes.classList.remove('!opacity-100');
-                campos.forEach(c => c.setAttribute('contenteditable', 'false'));
-                
-                statusContainer.classList.remove('hidden');
-                statusSelector.classList.add('hidden');
+            card.querySelectorAll('.campo-editavel').forEach(c => c.setAttribute('contenteditable', (!editando).toString()));
+            card.querySelector('.status-container').classList.toggle('hidden', !editando);
+            card.querySelector('.status-selector').classList.toggle('hidden', editando);
+            card.querySelector('.turno-texto').classList.toggle('hidden', !editando);
+            card.querySelector('.turno-selector').classList.toggle('hidden', editando);
+            
+            const juncaoInput = card.querySelector('.juncao-input'), juncaoTexto = card.querySelector('.juncao-texto');
+            juncaoInput.classList.toggle('hidden', editando);
+            if (editando && juncaoInput.querySelector('input').value.trim()) juncaoTexto.classList.remove('hidden');
+            else juncaoTexto.classList.add('hidden');
 
-                turnoTexto.classList.remove('hidden');
-                turnoSelector.classList.add('hidden');
-                
-                juncaoInput.classList.add('hidden');
-                const codigo = juncaoInput.querySelector('input').value.trim();
-                if (codigo) {
-                    juncaoTexto.classList.remove('hidden');
-                }
-            } else {
-                // LIGAR EDIÇÃO
-                icone.className = 'fa-solid fa-toggle-on text-lg';
-                botao.classList.remove('text-slate-400');
-                botao.classList.add('text-blue-600');
-                
-                acoes.classList.add('!opacity-100');
-                campos.forEach(c => c.setAttribute('contenteditable', 'true'));
-                
-                statusContainer.classList.add('hidden');
-                statusSelector.classList.remove('hidden');
-
-                turnoTexto.classList.add('hidden');
-                turnoSelector.classList.remove('hidden');
-                
-                juncaoInput.classList.remove('hidden');
-                juncaoTexto.classList.add('hidden');
-            }
             salvarDadosNoFirebase();
         }
 
-        // Finaliza a edição do card ao teclar Enter
-        function verificarEnter(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                const card = event.target.closest('.card-turma');
-                const btnToggle = card.querySelector('.btn-toggle-edit');
-                toggleEdicao(btnToggle);
+        function verificarEnter(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                toggleEdicao(e.target.closest('.card-turma').querySelector('.btn-toggle-edit'));
             }
         }
 
-        /* ================= LÓGICA DE EDIÇÃO DAS DISCIPLINAS ================= */
-
-        // Altera o status e a cor da borda da disciplina
-        function alterarStatusBordaDisciplina(select) {
-            const item = select.closest('.item-disciplina');
-            const valor = select.value;
-            const campoInstrutor = item.querySelector('.campo-instrutor');
-
-            item.classList.remove('border-slate-200', 'border-amber-400', 'border-emerald-500');
-
-            if (valor === 'sem-instrutor') {
-                item.classList.add('border-amber-400');
-                if (campoInstrutor) {
-                    campoInstrutor.innerText = 'Não consta';
-                }
-            } else if (valor === 'confirmada') {
-                item.classList.add('border-emerald-500');
-            } else {
-                item.classList.add('border-slate-200');
-            }
-            salvarDisciplinasAtual();
-        }
-
-        // Liga/Desliga a edição de uma disciplina individual
-        function toggleEdicaoDisciplina(botao) {
-            const item = botao.closest('.item-disciplina');
-            const acoes = item.querySelector('.acoes-disciplina');
-            const icone = botao.querySelector('i');
-            const campos = item.querySelectorAll('.campo-editavel');
-
-            const modoEdicaoAtivo = icone.classList.contains('fa-toggle-on');
-
-            if (modoEdicaoAtivo) {
-                // DESLIGAR EDIÇÃO
-                icone.className = 'fa-solid fa-toggle-off text-base';
-                botao.classList.remove('text-blue-600');
-                botao.classList.add('text-slate-400');
-                
-                acoes.classList.remove('!opacity-100');
-                campos.forEach(c => c.setAttribute('contenteditable', 'false'));
-            } else {
-                // LIGAR EDIÇÃO
-                icone.className = 'fa-solid fa-toggle-on text-base';
-                botao.classList.remove('text-slate-400');
-                botao.classList.add('text-blue-600');
-                
-                acoes.classList.add('!opacity-100');
-                campos.forEach(c => c.setAttribute('contenteditable', 'true'));
-            }
-            salvarDisciplinasAtual();
-        }
-
-        // Finaliza a edição da disciplina ao teclar Enter
-        function verificarEnterDisciplina(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                const item = event.target.closest('.item-disciplina');
-                const btnToggle = item.querySelector('.btn-toggle-edit');
-                toggleEdicaoDisciplina(btnToggle);
-            }
-            salvarDisciplinasAtual();
-        }
-
-        // Altera visual das cores do status
         function atualizarStatus(select) {
-            const card = select.closest('.card-turma');
-            const badge = card.querySelector('.badge-status');
-            const valor = select.value;
-
-            badge.innerText = valor;
-
-            if (valor === 'Turma Ativa') {
-                badge.className = 'badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded bg-emerald-100 text-emerald-800';
-            } else if (valor === 'Em formação') {
-                badge.className = 'badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded bg-amber-100 text-amber-800';
-            } else if (valor === 'Inicia em breve') {
-                badge.className = 'badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded bg-slate-200 text-slate-700';
-            }
+            const badge = select.closest('.card-turma').querySelector('.badge-status'), val = select.value;
+            badge.innerText = val;
+            badge.className = `badge-status inline-block px-2 py-0.5 text-xs font-semibold rounded ${val === 'Turma Ativa' ? 'bg-emerald-100 text-emerald-800' : val === 'Em formação' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'}`;
             salvarDadosNoFirebase();
         }
 
-        // Atualiza a exibição do texto do turno
         function atualizarTurno(select) {
-            const card = select.closest('.card-turma');
-            const texto = card.querySelector('.turno-texto');
-            texto.innerText = select.value;
+            select.closest('.card-turma').querySelector('.turno-texto').innerText = select.value;
             salvarDadosNoFirebase();
         }
 
-        // Atualiza a informação de junção de turmas
         function atualizarJuncao(input) {
-            const card = input.closest('.card-turma');
-            const codigoSpan = card.querySelector('.juncao-codigo');
-            codigoSpan.innerText = input.value.toUpperCase();
+            input.closest('.card-turma').querySelector('.juncao-codigo').innerText = input.value.toUpperCase();
             salvarDadosNoFirebase();
         }
 
-        // Prepara remoção e exibe o modal
+        // Remoção / Modal
         function removerTurma(botao) {
             cardParaRemover = botao.closest('.card-turma');
-            const badgeStatus = cardParaRemover.querySelector('.badge-status').innerText.trim();
+            const ativa = cardParaRemover.querySelector('.badge-status').innerText.trim() === 'Turma Ativa';
+            const modal = document.getElementById('modal-excluir'), btnConfirmar = document.getElementById('btn-confirmar-excluir'), timerBadge = document.getElementById('timer-contagem');
             
-            const modal = document.getElementById('modal-excluir');
-            const btnConfirmar = document.getElementById('btn-confirmar-excluir');
-            const timerBadge = document.getElementById('timer-contagem');
-            const textoAlerta = document.getElementById('modal-texto-alerta');
-
             clearInterval(intervaloTimer);
             modal.classList.remove('hidden');
 
-            if (badgeStatus === 'Turma Ativa') {
+            if (ativa) {
                 btnConfirmar.disabled = true;
                 timerBadge.classList.remove('hidden');
-                let segundosRestantes = 10;
-                timerBadge.innerText = `${segundosRestantes}s`;
-
-                textoAlerta.innerHTML = `<span class="font-bold text-red-600">ATENÇÃO ELEVADA:</span> Esta é uma <strong>Turma Ativa</strong>! Apagá-la pode impactar registros vigentes. Aguarde o tempo de confirmação para prosseguir.`;
-
+                let seg = 10;
+                timerBadge.innerText = `${seg}s`;
+                document.getElementById('modal-texto-alerta').innerHTML = `<span class="font-bold text-red-600">ATENÇÃO ELEVADA:</span> Esta é uma <strong>Turma Ativa</strong>! Apagá-la pode impactar registros vigentes. Aguarde o tempo de confirmação.`;
                 intervaloTimer = setInterval(() => {
-                    segundosRestantes--;
-                    timerBadge.innerText = `${segundosRestantes}s`;
-
-                    if (segundosRestantes <= 0) {
-                        clearInterval(intervaloTimer);
-                        btnConfirmar.disabled = false;
-                        timerBadge.classList.add('hidden');
-                    }
+                    seg--;
+                    timerBadge.innerText = `${seg}s`;
+                    if (seg <= 0) { clearInterval(intervaloTimer); btnConfirmar.disabled = false; timerBadge.classList.add('hidden'); }
                 }, 1000);
-
             } else {
                 btnConfirmar.disabled = false;
                 timerBadge.classList.add('hidden');
-                textoAlerta.innerText = 'Tem certeza que deseja apagar esta turma? Esta ação não poderá ser desfeita.';
+                document.getElementById('modal-texto-alerta').innerText = 'Tem certeza que deseja apagar esta turma? Esta ação não poderá ser desfeita.';
             }
         }
 
@@ -684,52 +380,30 @@
         }
 
         function confirmarExclusao() {
-            if (cardParaRemover) {
-                cardParaRemover.remove();
-                salvarDadosNoFirebase();
-            }
+            if (cardParaRemover) { cardParaRemover.remove(); salvarDadosNoFirebase(); }
             fecharModalExclusao();
         }
 
-        /* ================= LÓGICA DA TELA DE DISCIPLINAS ================= */
-
-        // Abre a página/tela de disciplinas carregando as disciplinas daquela turma específica
-        function abrirDisciplinas(idTurma, elementoCard) {
-            if (elementoCard) {
-                const iconeToggle = elementoCard.querySelector('.btn-toggle-edit i');
-                if (iconeToggle && iconeToggle.classList.contains('fa-toggle-on')) {
-                    return; // Bloqueia o redirecionamento se estiver em modo edição
-                }
-            }
-
+        // Lógica de Disciplinas
+        function abrirDisciplinas(idTurma, el) {
+            if (el?.querySelector('.btn-toggle-edit i')?.classList.contains('fa-toggle-on')) return;
             turmaAtualId = idTurma;
-            
-            // Pega o nome/código exibido no card
-            const nomeTurma = elementoCard ? elementoCard.querySelector('h2').innerText : 'TURMA';
-            document.getElementById('nome-turma-titulo').innerText = nomeTurma;
-
-            // Carrega o HTML de disciplinas correspondente à turma selecionada
-            const container = document.getElementById('lista-disciplinas');
-            container.innerHTML = turmasDisciplinasData[idTurma] || '';
-
+            document.getElementById('nome-turma-titulo').innerText = el ? el.querySelector('h2').innerText : 'TURMA';
+            document.getElementById('lista-disciplinas').innerHTML = turmasDisciplinasData[idTurma] || '';
             document.getElementById('tela-turmas').classList.add('hidden');
             document.getElementById('tela-disciplinas').classList.remove('hidden');
             inicializarDragAndDrop();
         }
 
-        // Voltar para o painel principal e salvar o estado atual
         function voltarParaTurmas() {
             salvarDisciplinasAtual();
             document.getElementById('tela-disciplinas').classList.add('hidden');
             document.getElementById('tela-turmas').classList.remove('hidden');
         }
 
-        // Adiciona uma nova disciplina retângulo E já entra no modo edição
         function adicionarDisciplina() {
-            const container = document.getElementById('lista-disciplinas');
-            const novaDisc = document.createElement('div');
+            const container = document.getElementById('lista-disciplinas'), novaDisc = document.createElement('div');
             novaDisc.className = 'item-disciplina group bg-white px-3 py-1.5 rounded-lg border-2 border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-3 leading-tight relative';
-            
             novaDisc.innerHTML = `
                 <div class="flex items-center gap-2.5">
                     <i draggable="true" class="drag-handle fa-solid fa-grip-vertical text-slate-300 hover:text-slate-600 text-xs cursor-grab active:cursor-grabbing p-1"></i>
@@ -739,13 +413,11 @@
                         <span class="text-slate-600">Instrutor (a): <strong class="campo-instrutor campo-editavel font-medium text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)">A definir</strong></span>
                         <span class="text-slate-300 hidden sm:inline">|</span>
                         <span class="text-slate-500 text-xs flex items-center gap-1">
-                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">DD/MM/AAAA</span>
-                            a
+                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">DD/MM/AAAA</span> a
                             <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">DD/MM/AAAA</span>
                         </span>
                     </div>
                 </div>
-
                 <div onclick="event.stopPropagation()" class="acoes-disciplina opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm z-10">
                     <div class="relative opacity-30 hover:opacity-100 transition-opacity duration-150">
                         <select onchange="alterarStatusBordaDisciplina(this)" class="text-[11px] rounded px-1 py-0.5 border border-slate-300 bg-white font-medium focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
@@ -754,75 +426,71 @@
                             <option value="confirmada">Confirmada</option>
                         </select>
                     </div>
-                    <button onclick="toggleEdicaoDisciplina(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors">
-                        <i class="fa-solid fa-toggle-off text-base"></i>
-                    </button>
-                    <button onclick="removerDisciplina(this)" title="Excluir Disciplina" class="text-slate-400 hover:text-red-500 transition-colors px-0.5">
-                        <i class="fa-solid fa-trash-can text-xs"></i>
-                    </button>
-                </div>
-            `;
+                    <button onclick="toggleEdicaoDisciplina(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-toggle-off text-base"></i></button>
+                    <button onclick="removerDisciplina(this)" title="Excluir Disciplina" class="text-slate-400 hover:text-red-500 transition-colors px-0.5"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                </div>`;
 
             container.appendChild(novaDisc);
             inicializarDragAndDrop();
+            toggleEdicaoDisciplina(novaDisc.querySelector('.btn-toggle-edit'));
+            novaDisc.querySelector('.campo-editavel')?.focus();
+            salvarDisciplinasAtual();
+        }
 
-            // Ativa automaticamente o modo de edição para a nova disciplina
-            const btnToggle = novaDisc.querySelector('.btn-toggle-edit');
-            toggleEdicaoDisciplina(btnToggle);
+        function alterarStatusBordaDisciplina(select) {
+            const item = select.closest('.item-disciplina'), val = select.value, instrutor = item.querySelector('.campo-instrutor');
+            item.classList.remove('border-slate-200', 'border-amber-400', 'border-emerald-500');
+            if (val === 'sem-instrutor') { item.classList.add('border-amber-400'); if (instrutor) instrutor.innerText = 'Não consta'; }
+            else if (val === 'confirmada') item.classList.add('border-emerald-500');
+            else item.classList.add('border-slate-200');
+            salvarDisciplinasAtual();
+        }
 
-            // Foca automaticamente no primeiro campo de nome da disciplina recém-criada
-            const primeiroCampo = novaDisc.querySelector('.campo-editavel');
-            if (primeiroCampo) {
-                primeiroCampo.focus();
+        function toggleEdicaoDisciplina(botao) {
+            const item = botao.closest('.item-disciplina'), acoes = item.querySelector('.acoes-disciplina'), icone = botao.querySelector('i');
+            const editando = icone.classList.contains('fa-toggle-on');
+
+            icone.className = editando ? 'fa-solid fa-toggle-off text-base' : 'fa-solid fa-toggle-on text-base';
+            botao.classList.toggle('text-blue-600', !editando);
+            botao.classList.toggle('text-slate-400', editando);
+            acoes.classList.toggle('!opacity-100', !editando);
+            item.querySelectorAll('.campo-editavel').forEach(c => c.setAttribute('contenteditable', (!editando).toString()));
+            salvarDisciplinasAtual();
+        }
+
+        function verificarEnterDisciplina(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                toggleEdicaoDisciplina(e.target.closest('.item-disciplina').querySelector('.btn-toggle-edit'));
             }
-
             salvarDisciplinasAtual();
         }
 
-        // Remove uma disciplina
         function removerDisciplina(botao) {
-            const item = botao.closest('.item-disciplina');
-            item.remove();
+            botao.closest('.item-disciplina').remove();
             salvarDisciplinasAtual();
         }
 
-        // Funcionalidade de Arrastar e Soltar (Drag and Drop) exclusiva pela alça de aderência
+        // Drag and Drop
         function inicializarDragAndDrop() {
             const container = document.getElementById('lista-disciplinas');
-            const handles = container.querySelectorAll('.drag-handle');
-
-            handles.forEach(handle => {
+            container.querySelectorAll('.drag-handle').forEach(handle => {
                 const item = handle.closest('.item-disciplina');
-
-                handle.addEventListener('dragstart', (e) => {
-                    item.classList.add('dragging');
-                    e.dataTransfer.setData('text/plain', '');
-                });
-
-                handle.addEventListener('dragend', () => {
-                    item.classList.remove('dragging');
-                    salvarDisciplinasAtual();
-                });
+                handle.addEventListener('dragstart', e => { item.classList.add('dragging'); e.dataTransfer.setData('text/plain', ''); });
+                handle.addEventListener('dragend', () => { item.classList.remove('dragging'); salvarDisciplinasAtual(); });
             });
 
-            container.addEventListener('dragover', (e) => {
+            container.addEventListener('dragover', e => {
                 e.preventDefault();
                 const draggingItem = document.querySelector('.dragging');
                 if (!draggingItem) return;
-
                 const siblings = [...container.querySelectorAll('.item-disciplina:not(.dragging)')];
-                const nextSibling = siblings.find(sibling => {
-                    return e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2;
-                });
-
+                const nextSibling = siblings.find(sibling => e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2);
                 container.insertBefore(draggingItem, nextSibling);
             });
         }
 
-        // Inicializa ao carregar
-        document.addEventListener('DOMContentLoaded', () => {
-            inicializarDragAndDrop();
-        });
+        document.addEventListener('DOMContentLoaded', inicializarDragAndDrop);
     </script>
 </body>
 </html>
