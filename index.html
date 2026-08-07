@@ -44,27 +44,32 @@
             </div>
         </header>
 
+        <p class="text-xs text-slate-500 mb-3 flex items-center gap-1">
+            <i class="fa-solid fa-grip-vertical text-slate-400"></i> Arraste pelo ícone de pontinhos para reordenar a sequência dos cursos.
+        </p>
+
         <div id="lista-cursos" class="flex flex-col gap-4">
-            <!-- Barra de Curso Exemplo -->
-            <div onclick="abrirTurmasDoCurso('curso_edificacoes', this)" class="item-curso group bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 p-5 flex justify-between items-center cursor-pointer transition-all relative">
-                <div class="flex items-center gap-4 w-full pr-16">
-                    <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                        <i class="fa-solid fa-graduation-cap text-lg"></i>
+            <!-- Barra de Curso Exemplo Ampliada -->
+            <div onclick="abrirTurmasDoCurso('curso_edificacoes', this)" class="item-curso group bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 p-7 flex justify-between items-center cursor-pointer transition-all relative min-h-[5.5rem]">
+                <div class="flex items-center gap-5 w-full pr-16">
+                    <i draggable="true" onclick="event.stopPropagation()" class="drag-handle-curso fa-solid fa-grip-vertical text-slate-300 hover:text-slate-600 text-base cursor-grab active:cursor-grabbing p-1"></i>
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                        <i class="fa-solid fa-graduation-cap text-xl"></i>
                     </div>
                     <div class="w-full">
-                        <h2 class="nome-curso campo-editavel-curso text-xl font-bold text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="Nome do Curso..." contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterCurso(event)">Turmas do curso de Edificações</h2>
+                        <h2 class="nome-curso campo-editavel-curso text-2xl font-extrabold text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME DO CURSO..." contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterCurso(event)" oninput="forcarMaiusculaCurso(event)">TURMAS DO CURSO DE EDIFICAÇÕES</h2>
                     </div>
                 </div>
                 <!-- Ações minimalistas no Hover -->
-                <div onclick="event.stopPropagation()" class="acoes-curso opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute right-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg border border-slate-200 shadow-sm z-10">
-                    <button onclick="toggleEdicaoCurso(this)" title="Editar Curso" class="btn-toggle-edit-curso text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-pen text-base"></i></button>
-                    <button onclick="solicitarExclusaoCurso(this)" title="Excluir Curso" class="text-slate-400 hover:text-red-500 transition-colors px-1"><i class="fa-solid fa-trash-can text-base"></i></button>
+                <div onclick="event.stopPropagation()" class="acoes-curso opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute right-6 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg border border-slate-200 shadow-sm z-10">
+                    <button onclick="solicitarSenhaEEditarCurso(this)" title="Editar Curso" class="btn-toggle-edit-curso text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-pen text-lg"></i></button>
+                    <button onclick="solicitarExclusaoCurso(this)" title="Excluir Curso" class="text-slate-400 hover:text-red-500 transition-colors px-1"><i class="fa-solid fa-trash-can text-lg"></i></button>
                 </div>
             </div>
         </div>
 
-        <button onclick="adicionarCurso()" class="w-full mt-4 py-4 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-2 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all font-medium text-sm">
-            <i class="fa-solid fa-plus text-base"></i> Adicionar Novo Curso
+        <button onclick="adicionarCurso()" class="w-full mt-4 py-5 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-2 text-slate-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition-all font-semibold text-base">
+            <i class="fa-solid fa-plus text-lg"></i> Adicionar Novo Curso
         </button>
     </div>
 
@@ -75,7 +80,7 @@
                 <button onclick="voltarParaCursos()" class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-2 transition-colors">
                     <i class="fa-solid fa-arrow-left"></i> Voltar para Cursos
                 </button>
-                <h1 id="titulo-curso-atual" class="text-3xl font-bold text-slate-900">Turmas do Curso</h1>
+                <h1 id="titulo-curso-atual" class="text-3xl font-bold text-slate-900 uppercase">Turmas do Curso</h1>
                 <p class="text-slate-600">Painel de organização do Grau Técnico - Montese</p>
             </div>
         </header>
@@ -127,23 +132,23 @@
         </div>
     </div>
 
-    <!-- MODAL DE SEGURANÇA: EXCLUSÃO DE CURSO -->
-    <div id="modal-excluir-curso" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border-2 border-red-500 animate-pulse-once">
-            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4"><i class="fa-solid fa-shield-cat text-2xl"></i></div>
-            <h3 class="text-xl font-bold text-red-600 mb-1">AÇÃO CRÍTICA: Apagar Curso!</h3>
-            <p class="text-xs text-slate-500 mb-4">Atenção! Apagar este curso removerá permanentemente <strong>TODAS as turmas e disciplinas</strong> atreladas a ele!</p>
+    <!-- MODAL DE SEGURANÇA: AÇÕES DE CURSO (EDITAR / EXCLUIR) -->
+    <div id="modal-senha-curso" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border-2 border-slate-300">
+            <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-4"><i class="fa-solid fa-lock text-2xl"></i></div>
+            <h3 id="modal-titulo-acao" class="text-xl font-bold text-slate-900 mb-1">Confirmação de Segurança</h3>
+            <p id="modal-subtitulo-acao" class="text-xs text-slate-500 mb-4">Digite a senha de administrador para prosseguir.</p>
             
             <div class="mb-4">
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Digite a Senha do Administrador:</label>
-                <input type="password" id="input-senha-curso" placeholder="****" class="w-full text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Senha do Administrador:</label>
+                <input type="password" id="input-senha-curso" placeholder="****" onkeydown="verificarEnterSenhaCurso(event)" class="w-full text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <p id="erro-senha-curso" class="text-xs text-red-500 hidden mt-1">Senha incorreta. Tente novamente.</p>
             </div>
 
             <div class="flex justify-end gap-3">
-                <button onclick="fecharModalExclusaoCurso()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
-                <button onclick="confirmarExclusaoCurso()" class="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors shadow">
-                    Excluir Curso Completo
+                <button onclick="fecharModalSenhaCurso()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
+                <button onclick="executarAcaoCursoProtegida()" class="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow">
+                    Confirmar
                 </button>
             </div>
         </div>
@@ -151,7 +156,7 @@
 
     <script>
         // Configurações Globais
-        const SENHA_MASTER = "1234"; // Senha para excluir um curso completo
+        const SENHA_MASTER = "2014"; 
         const firebaseConfig = {
             apiKey: "AIzaSyB5qVMY7E-VSvXnvlwgbUuW9vi7NHtLCdA",
             authDomain: "gestao-turmas-923ba.firebaseapp.com",
@@ -168,12 +173,12 @@
         let cursoAtualId = null;
         let turmaAtualId = null;
         let cardParaRemover = null;
-        let cursoParaRemover = null;
+        let cursoAlvoAcao = null;
+        let tipoAcaoCurso = null; // 'editar' ou 'excluir'
         let intervaloTimer = null;
         let contadorCursos = 1;
         let contadorTurmas = 1;
 
-        // Estrutura de dados: { curso_id: { htmlTurmas: '', disciplinas: { turma_id: 'htmlDisciplinas' } } }
         let dadosSistema = {};
 
         // Autenticação
@@ -211,6 +216,7 @@
                     const data = doc.data();
                     if (data.dadosSistema) dadosSistema = data.dadosSistema;
                     if (data.listaCursosHTML) document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
+                    inicializarDragAndDropCursos();
                 }
             });
         }
@@ -218,8 +224,6 @@
         function salvarTurmasDoCursoAtual() {
             if (cursoAtualId) {
                 if (!dadosSistema[cursoAtualId]) dadosSistema[cursoAtualId] = { htmlTurmas: '', disciplinas: {} };
-                
-                // Clona as turmas para persistência mantendo o botão de adicionar
                 const grid = document.getElementById('grid-turmas').cloneNode(true);
                 const btn = grid.querySelector('#btn-adicionar');
                 if (btn) btn.remove();
@@ -270,36 +274,117 @@
             dadosSistema[idNovoCurso] = { htmlTurmas: '', disciplinas: {} };
 
             const novoCurso = document.createElement('div');
-            novoCurso.className = 'item-curso group bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 p-5 flex justify-between items-center cursor-pointer transition-all relative';
+            novoCurso.className = 'item-curso group bg-white rounded-xl shadow-sm hover:shadow-md border border-slate-200 p-7 flex justify-between items-center cursor-pointer transition-all relative min-h-[5.5rem]';
             novoCurso.setAttribute('onclick', `abrirTurmasDoCurso('${idNovoCurso}', this)`);
             novoCurso.innerHTML = `
-                <div class="flex items-center gap-4 w-full pr-16">
-                    <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                        <i class="fa-solid fa-graduation-cap text-lg"></i>
+                <div class="flex items-center gap-5 w-full pr-16">
+                    <i draggable="true" onclick="event.stopPropagation()" class="drag-handle-curso fa-solid fa-grip-vertical text-slate-300 hover:text-slate-600 text-base cursor-grab active:cursor-grabbing p-1"></i>
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                        <i class="fa-solid fa-graduation-cap text-xl"></i>
                     </div>
                     <div class="w-full">
-                        <h2 class="nome-curso campo-editavel-curso text-xl font-bold text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="Nome do Curso..." contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterCurso(event)">Turmas do curso de Novo Curso</h2>
+                        <h2 class="nome-curso campo-editavel-curso text-2xl font-extrabold text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME DO CURSO..." contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterCurso(event)" oninput="forcarMaiusculaCurso(event)">TURMAS DO CURSO DE NOVO CURSO</h2>
                     </div>
                 </div>
-                <div onclick="event.stopPropagation()" class="acoes-curso opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute right-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg border border-slate-200 shadow-sm z-10">
-                    <button onclick="toggleEdicaoCurso(this)" title="Editar Curso" class="btn-toggle-edit-curso text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-pen text-base"></i></button>
-                    <button onclick="solicitarExclusaoCurso(this)" title="Excluir Curso" class="text-slate-400 hover:text-red-500 transition-colors px-1"><i class="fa-solid fa-trash-can text-base"></i></button>
+                <div onclick="event.stopPropagation()" class="acoes-curso opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute right-6 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg border border-slate-200 shadow-sm z-10">
+                    <button onclick="solicitarSenhaEEditarCurso(this)" title="Editar Curso" class="btn-toggle-edit-curso text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-pen text-lg"></i></button>
+                    <button onclick="solicitarExclusaoCurso(this)" title="Excluir Curso" class="text-slate-400 hover:text-red-500 transition-colors px-1"><i class="fa-solid fa-trash-can text-lg"></i></button>
                 </div>`;
 
             document.getElementById('lista-cursos').appendChild(novoCurso);
+            inicializarDragAndDropCursos();
             toggleEdicaoCurso(novoCurso.querySelector('.btn-toggle-edit-curso'));
             novoCurso.querySelector('.nome-curso')?.focus();
             salvarDadosNoFirebase();
+        }
+
+        function solicitarSenhaEEditarCurso(botao) {
+            const item = botao.closest('.item-curso');
+            const editando = botao.querySelector('i').classList.contains('fa-check');
+
+            if (editando) {
+                toggleEdicaoCurso(botao);
+            } else {
+                cursoAlvoAcao = item;
+                tipoAcaoCurso = 'editar';
+                abrirModalSenhaCurso("Editar Nome do Curso", "Digite a senha do Administrador para alterar este curso.");
+            }
+        }
+
+        function solicitarExclusaoCurso(botao) {
+            cursoAlvoAcao = botao.closest('.item-curso');
+            tipoAcaoCurso = 'excluir';
+            abrirModalSenhaCurso("AÇÃO CRÍTICA: Apagar Curso!", "Atenção! Apagar este curso removerá permanentemente TODAS as turmas e disciplinas atreladas a ele.");
+        }
+
+        function abrirModalSenhaCurso(titulo, subtitulo) {
+            document.getElementById('modal-titulo-acao').innerText = titulo;
+            document.getElementById('modal-subtitulo-acao').innerText = subtitulo;
+            document.getElementById('input-senha-curso').value = '';
+            document.getElementById('erro-senha-curso').classList.add('hidden');
+            document.getElementById('modal-senha-curso').classList.remove('hidden');
+            setTimeout(() => document.getElementById('input-senha-curso').focus(), 100);
+        }
+
+        function fecharModalSenhaCurso() {
+            document.getElementById('modal-senha-curso').classList.add('hidden');
+            cursoAlvoAcao = null;
+            tipoAcaoCurso = null;
+        }
+
+        function verificarEnterSenhaCurso(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executarAcaoCursoProtegida();
+            }
+        }
+
+        function executarAcaoCursoProtegida() {
+            const senha = document.getElementById('input-senha-curso').value;
+            if (senha === SENHA_MASTER) {
+                if (tipoAcaoCurso === 'editar' && cursoAlvoAcao) {
+                    const btn = cursoAlvoAcao.querySelector('.btn-toggle-edit-curso');
+                    fecharModalSenhaCurso();
+                    toggleEdicaoCurso(btn);
+                } else if (tipoAcaoCurso === 'excluir' && cursoAlvoAcao) {
+                    cursoAlvoAcao.remove();
+                    salvarDadosNoFirebase();
+                    fecharModalSenhaCurso();
+                }
+            } else {
+                document.getElementById('erro-senha-curso').classList.remove('hidden');
+            }
         }
 
         function toggleEdicaoCurso(botao) {
             const item = botao.closest('.item-curso'), icone = botao.querySelector('i'), h2 = item.querySelector('.nome-curso');
             const editando = icone.classList.contains('fa-check');
 
-            icone.className = editando ? 'fa-solid fa-pen text-base' : 'fa-solid fa-check text-base text-emerald-600';
+            icone.className = editando ? 'fa-solid fa-pen text-lg' : 'fa-solid fa-check text-lg text-emerald-600';
             h2.setAttribute('contenteditable', (!editando).toString());
-            if (!editando) h2.focus();
+            
+            if (!editando) {
+                h2.focus();
+            } else {
+                h2.innerText = h2.innerText.toUpperCase();
+            }
 
+            salvarDadosNoFirebase();
+        }
+
+        function forcarMaiusculaCurso(e) {
+            const el = e.target, original = el.innerText, upper = original.toUpperCase();
+            if (original !== upper) {
+                const sel = window.getSelection(), range = sel.getRangeAt(0), pos = range.startOffset;
+                el.innerText = upper;
+                if (el.childNodes.length > 0) {
+                    const newRange = document.createRange();
+                    newRange.setStart(el.childNodes[0], pos);
+                    newRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                }
+            }
             salvarDadosNoFirebase();
         }
 
@@ -310,32 +395,32 @@
             }
         }
 
-        function solicitarExclusaoCurso(botao) {
-            cursoParaRemover = botao.closest('.item-curso');
-            document.getElementById('input-senha-curso').value = '';
-            document.getElementById('erro-senha-curso').classList.add('hidden');
-            document.getElementById('modal-excluir-curso').classList.remove('hidden');
+        // DRAG AND DROP - CURSOS
+        function inicializarDragAndDropCursos() {
+            const container = document.getElementById('lista-cursos');
+            container.querySelectorAll('.drag-handle-curso').forEach(handle => {
+                const item = handle.closest('.item-curso');
+                handle.addEventListener('dragstart', e => { 
+                    item.classList.add('dragging'); 
+                    e.dataTransfer.setData('text/plain', ''); 
+                });
+                handle.addEventListener('dragend', () => { 
+                    item.classList.remove('dragging'); 
+                    salvarDadosNoFirebase(); 
+                });
+            });
+
+            container.addEventListener('dragover', e => {
+                e.preventDefault();
+                const draggingItem = document.querySelector('.item-curso.dragging');
+                if (!draggingItem) return;
+                const siblings = [...container.querySelectorAll('.item-curso:not(.dragging)')];
+                const nextSibling = siblings.find(sibling => e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2);
+                container.insertBefore(draggingItem, nextSibling);
+            });
         }
 
-        function fecharModalExclusaoCurso() {
-            document.getElementById('modal-excluir-curso').classList.add('hidden');
-            cursoParaRemover = null;
-        }
-
-        function confirmarExclusaoCurso() {
-            const senha = document.getElementById('input-senha-curso').value;
-            if (senha === SENHA_MASTER) {
-                if (cursoParaRemover) {
-                    cursoParaRemover.remove();
-                    salvarDadosNoFirebase();
-                }
-                fecharModalExclusaoCurso();
-            } else {
-                document.getElementById('erro-senha-curso').classList.remove('hidden');
-            }
-        }
-
-        // LÓGICA DE TURMAS (Inalterada na estrutura dos cards)
+        // LÓGICA DE TURMAS
         function adicionarTurma() {
             contadorTurmas++;
             const idNovaTurma = 'turma_' + Date.now();
@@ -345,6 +430,7 @@
             novoCard.setAttribute('onclick', `abrirDisciplinas('${idNovaTurma}', this)`);
             novoCard.innerHTML = `
                 <div onclick="event.stopPropagation()" class="acoes-card opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute top-3 right-3 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm z-10">
+                    <button onclick="duplicarTurma('${idNovaTurma}', this)" title="Duplicar Turma" class="text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-copy text-base"></i></button>
                     <button onclick="toggleEdicao(this)" title="Alternar Modo Edição" class="btn-toggle-edit text-slate-400 hover:text-blue-600 transition-colors"><i class="fa-solid fa-toggle-off text-lg"></i></button>
                     <button onclick="removerTurma(this)" title="Excluir Turma" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
                 </div>
@@ -383,6 +469,46 @@
             document.getElementById('grid-turmas').insertBefore(novoCard, document.getElementById('btn-adicionar'));
             toggleEdicao(novoCard.querySelector('.btn-toggle-edit'));
             novoCard.querySelector('.campo-editavel')?.focus();
+            salvarTurmasDoCursoAtual();
+        }
+
+        // NOVO: Função para duplicar uma turma e suas disciplinas associadas
+        function duplicarTurma(idTurmaOrigem, botao) {
+            const cardOriginal = botao.closest('.card-turma');
+            const idNovaTurma = 'turma_' + Date.now();
+
+            // Clona o elemento visual do card
+            const novoCard = cardOriginal.cloneNode(true);
+            
+            // Atualiza o evento de clique para abrir a nova turma duplicada
+            novoCard.setAttribute('onclick', `abrirDisciplinas('${idNovaTurma}', this)`);
+
+            // Atualiza a chamada do botão duplicar no novo card para o novo ID
+            const btnDuplicar = novoCard.querySelector('.fa-copy')?.parentElement;
+            if (btnDuplicar) {
+                btnDuplicar.setAttribute('onclick', `duplicarTurma('${idNovaTurma}', this)`);
+            }
+
+            // Copia as disciplinas do objeto do curso atual para a nova turma
+            if (cursoAtualId && dadosSistema[cursoAtualId] && dadosSistema[cursoAtualId].disciplinas) {
+                const disciplinasOrigem = dadosSistema[cursoAtualId].disciplinas[idTurmaOrigem] || '';
+                dadosSistema[cursoAtualId].disciplinas[idNovaTurma] = disciplinasOrigem;
+            }
+
+            // Reseta o estado do botão de edição do card clonado
+            const btnEdit = novoCard.querySelector('.btn-toggle-edit');
+            if (btnEdit) {
+                btnEdit.querySelector('i').className = 'fa-solid fa-toggle-off text-lg';
+            }
+
+            // Insere o novo card duplicado antes do botão "Nova Turma"
+            document.getElementById('grid-turmas').insertBefore(novoCard, document.getElementById('btn-adicionar'));
+
+            // Habilita edição automaticamente para poder renomear/alterar
+            if (btnEdit) {
+                toggleEdicao(btnEdit);
+            }
+
             salvarTurmasDoCursoAtual();
         }
 
@@ -470,7 +596,7 @@
             fecharModalExclusao();
         }
 
-        // LÓGICA DE DISCIPLINAS (Inalterada na estrutura dos itens)
+        // LÓGICA DE DISCIPLINAS
         function abrirDisciplinas(idTurma, el) {
             if (el?.querySelector('.btn-toggle-edit i')?.classList.contains('fa-toggle-on')) return;
             turmaAtualId = idTurma;
@@ -596,7 +722,7 @@
 
         const interceptaCliqueEditavel = e => e.currentTarget.getAttribute('contenteditable') === 'true' && e.stopPropagation();
 
-        // DRAG AND DROP
+        // DRAG AND DROP - DISCIPLINAS
         function inicializarDragAndDrop() {
             const container = document.getElementById('lista-disciplinas');
             container.querySelectorAll('.drag-handle').forEach(handle => {
@@ -607,7 +733,7 @@
 
             container.addEventListener('dragover', e => {
                 e.preventDefault();
-                const draggingItem = document.querySelector('.dragging');
+                const draggingItem = document.querySelector('.item-disciplina.dragging');
                 if (!draggingItem) return;
                 const siblings = [...container.querySelectorAll('.item-disciplina:not(.dragging)')];
                 const nextSibling = siblings.find(sibling => e.clientY <= sibling.getBoundingClientRect().top + sibling.getBoundingClientRect().height / 2);
@@ -615,7 +741,10 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', inicializarDragAndDrop);
+        document.addEventListener('DOMContentLoaded', () => {
+            inicializarDragAndDrop();
+            inicializarDragAndDropCursos();
+        });
     </script>
 </body>
 </html>
