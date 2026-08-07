@@ -15,6 +15,14 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
         .dragging { opacity: 0.4; border: 2px dashed #3b82f6 !important; }
+
+        /* Estilo para simular Placeholder em elementos contenteditable */
+        [contenteditable]:empty:before {
+            content: attr(data-placeholder);
+            color: #94a3b8; /* Slate 400 - Translúcido */
+            pointer-events: none;
+            display: inline-block;
+        }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen p-8 text-slate-800">
@@ -54,10 +62,10 @@
                             <option value="Inicia em breve">Inicia em breve</option>
                         </select>
                     </div>
-                    <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)">EDF21-N</h2>
+                    <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME TURMA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)">EDF21-N</h2>
                     <div class="text-xs text-slate-500 mt-0.5 flex flex-col gap-0.5">
-                        <div>Início: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)">01/02/2026</span></div>
-                        <div>Prev. Término: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)">20/12/2026</span></div>
+                        <div>Início: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)">01/02/2026</span></div>
+                        <div>Prev. Término: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)">20/12/2026</span></div>
                     </div>
                     <div class="juncao-container text-xs text-indigo-600 font-medium mt-1">
                         <span class="juncao-texto hidden"><i class="fa-solid fa-code-merge mr-1"></i>Junta com: <strong class="juncao-codigo"></strong></span>
@@ -76,7 +84,7 @@
                             <option value="Noturno" selected>Noturno</option>
                         </select>
                     </div>
-                    <span class="campo-editavel outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)">30 Alunos</span>
+                    <span class="campo-editavel outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="0 Alunos" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)">30 Alunos</span>
                 </div>
             </div>
 
@@ -112,13 +120,13 @@
                 <div class="flex items-center gap-2.5">
                     <i draggable="true" class="drag-handle fa-solid fa-grip-vertical text-slate-300 hover:text-slate-600 text-xs cursor-grab active:cursor-grabbing p-1"></i>
                     <div class="text-xs text-slate-700 flex items-center flex-wrap gap-x-1.5">
-                        <strong class="campo-editavel text-sm font-semibold text-slate-900 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)">Matemática Empresarial 1</strong>
+                        <strong class="campo-editavel text-sm font-semibold text-slate-900 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="Nova Disciplina" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)">Matemática Empresarial 1</strong>
                         <span class="text-slate-300 hidden sm:inline">|</span>
-                        <span class="text-slate-600">Instrutor (a): <strong class="campo-instrutor campo-editavel font-medium text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)">Jean</strong></span>
+                        <span class="text-slate-600">Instrutor (a): <strong class="campo-instrutor campo-editavel font-medium text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="A definir" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)">Jean</strong></span>
                         <span class="text-slate-300 hidden sm:inline">|</span>
                         <span class="text-slate-500 text-xs flex items-center gap-1">
-                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">12/05/2026</span> a
-                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">21/07/2026</span>
+                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">12/05/2026</span> a
+                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">21/07/2026</span>
                         </span>
                     </div>
                 </div>
@@ -272,10 +280,10 @@
                             <option value="Inicia em breve">Inicia em breve</option>
                         </select>
                     </div>
-                    <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)">NOME TURMA</h2>
+                    <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME TURMA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)"></h2>
                     <div class="text-xs text-slate-500 mt-0.5 flex flex-col gap-0.5">
-                        <div>Início: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)">DD/MM/AAAA</span></div>
-                        <div>Prev. Término: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)">DD/MM/AAAA</span></div>
+                        <div>Início: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)"></span></div>
+                        <div>Prev. Término: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)"></span></div>
                     </div>
                     <div class="juncao-container text-xs text-indigo-600 font-medium mt-1">
                         <span class="juncao-texto hidden"><i class="fa-solid fa-code-merge mr-1"></i>Junta com: <strong class="juncao-codigo"></strong></span>
@@ -292,7 +300,7 @@
                             <option value="Matutino">Matutino</option><option value="Vespertino">Vespertino</option><option value="Noturno" selected>Noturno</option>
                         </select>
                     </div>
-                    <span class="campo-editavel outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)">0 Alunos</span>
+                    <span class="campo-editavel outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="0 Alunos" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)"></span>
                 </div>`;
 
             document.getElementById('grid-turmas').insertBefore(novoCard, document.getElementById('btn-adicionar'));
@@ -410,13 +418,13 @@
                 <div class="flex items-center gap-2.5">
                     <i draggable="true" class="drag-handle fa-solid fa-grip-vertical text-slate-300 hover:text-slate-600 text-xs cursor-grab active:cursor-grabbing p-1"></i>
                     <div class="text-xs text-slate-700 flex items-center flex-wrap gap-x-1.5">
-                        <strong class="campo-editavel text-sm font-semibold text-slate-900 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)">Nova Disciplina</strong>
+                        <strong class="campo-editavel text-sm font-semibold text-slate-900 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="Nova Disciplina" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)"></strong>
                         <span class="text-slate-300 hidden sm:inline">|</span>
-                        <span class="text-slate-600">Instrutor (a): <strong class="campo-instrutor campo-editavel font-medium text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)">A definir</strong></span>
+                        <span class="text-slate-600">Instrutor (a): <strong class="campo-instrutor campo-editavel font-medium text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="A definir" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)"></strong></span>
                         <span class="text-slate-300 hidden sm:inline">|</span>
                         <span class="text-slate-500 text-xs flex items-center gap-1">
-                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">DD/MM/AAAA</span> a
-                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)">DD/MM/AAAA</span>
+                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)"></span> a
+                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)"></span>
                         </span>
                     </div>
                 </div>
