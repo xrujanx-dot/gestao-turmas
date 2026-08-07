@@ -432,9 +432,14 @@
             }).catch(e => console.error("Erro ao registrar presença:", e));
         }
 
-        // SINCRONIZAÇÃO COMPARTILHADA NO FIRESTORE
+        // SINCRONIZAÇÃO COMPARTILHADA NO FIRESTORE (Isolada estritamente por e-mail autenticado)
         function conectarAoFirestoreCompartilhado() {
-            unsubscribeFirestore = db.collection('sistema_escola').doc('dados_gerais').onSnapshot(doc => {
+            if (!usuarioAtual || !usuarioAtual.email) return;
+
+            // Transforma o e-mail em uma chave válida para o Firestore
+            const emailKey = usuarioAtual.email.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
+
+            unsubscribeFirestore = db.collection('usuarios_escola').doc(emailKey).onSnapshot(doc => {
                 if (usuarioEstaEditando()) return;
 
                 if (doc.exists) {
@@ -470,13 +475,15 @@
         }
 
         function salvarDadosNoFirebase(acaoHistorico = null) {
-            if (!usuarioAtual) return;
+            if (!usuarioAtual || !usuarioAtual.email) return;
             
             if (acaoHistorico) {
                 registrarHistorico(acaoHistorico);
             }
 
-            db.collection('sistema_escola').doc('dados_gerais').set({
+            const emailKey = usuarioAtual.email.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
+
+            db.collection('usuarios_escola').doc(emailKey).set({
                 dadosSistema,
                 historicoEdicao,
                 turmasApagadas,
