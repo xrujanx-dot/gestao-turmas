@@ -77,7 +77,7 @@
                         <i class="fa-solid fa-graduation-cap text-xl"></i>
                     </div>
                     <div class="w-full">
-                        <h2 class="nome-curso campo-editavel-curso text-2xl font-extrabold text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME DO CURSO..." contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterCurso(event)" oninput="forcarMaiusculaCurso(event)">TURMAS DO CURSO DE EDIFICAÇÕES</h2>
+                        <h2 class="nome-curso campo-editavel-curso text-2xl font-extrabold text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME DO CURSO..." contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterCurso(event)" oninput="forcarMaiusculaCurso(event)" onblur="salvarDadosNoFirebase()">TURMAS DO CURSO DE EDIFICAÇÕES</h2>
                     </div>
                 </div>
                 <!-- Ações minimalistas no Hover -->
@@ -230,6 +230,13 @@
 
         let dadosSistema = {};
 
+        // Auxiliar para saber se o usuário local está editando algum campo
+        function usuarioEstaEditando() {
+            const active = document.activeElement;
+            if (!active) return false;
+            return active.isContentEditable || active.tagName === 'INPUT' || active.tagName === 'SELECT';
+        }
+
         // Autenticação
         const fazerLoginGoogle = () => auth.signInWithPopup(provider).catch(e => alert("Erro ao fazer login: " + e.message));
         const fazerLogout = () => auth.signOut();
@@ -285,7 +292,6 @@
             if (!usuarioAtual) return;
             atualizarLocalizacaoPresenca();
 
-            // Escuta usuários online
             db.collection('presenca').onSnapshot(snapshot => {
                 const container = document.getElementById('lista-usuarios-online');
                 container.innerHTML = '';
@@ -293,7 +299,6 @@
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Considera online se atualizou nos últimos 2 minutos
                     if (data.timestamp && (Date.now() - data.timestamp.toMillis() < 120000)) {
                         outros++;
                         const badge = document.createElement('span');
@@ -308,7 +313,6 @@
                 }
             });
 
-            // Ping a cada 30 segundos
             setInterval(() => atualizarLocalizacaoPresenca(), 30000);
         }
 
@@ -326,9 +330,12 @@
             }).catch(e => console.error("Erro ao registrar presença:", e));
         }
 
-        // SINCRONIZAÇÃO COMPARTILHADA NO FIRESTORE
+        // SINCRONIZAÇÃO COMPARTILHADA NO FIRESTORE (COM PROTEÇÃO DE FOCO)
         function conectarAoFirestoreCompartilhado() {
             unsubscribeFirestore = db.collection('sistema_escola').doc('dados_gerais').onSnapshot(doc => {
+                // Impede que o snapshot do Firebase recarregue a tela caso o usuário esteja no meio de uma digitação
+                if (usuarioEstaEditando()) return;
+
                 if (doc.exists) {
                     const data = doc.data();
                     if (data.dadosSistema) dadosSistema = data.dadosSistema;
@@ -337,7 +344,6 @@
                         inicializarDragAndDropCursos();
                     }
                     
-                    // Atualiza a tela visível no momento
                     if (cursoAtualId && document.getElementById('tela-turmas').classList.contains('hidden') === false) {
                         carregarTurmasNaTela();
                     } else if (turmaAtualId && document.getElementById('tela-disciplinas').classList.contains('hidden') === false) {
@@ -426,7 +432,7 @@
                         <i class="fa-solid fa-graduation-cap text-xl"></i>
                     </div>
                     <div class="w-full">
-                        <h2 class="nome-curso campo-editavel-curso text-2xl font-extrabold text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME DO CURSO..." contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterCurso(event)" oninput="forcarMaiusculaCurso(event)">TURMAS DO CURSO DE NOVO CURSO</h2>
+                        <h2 class="nome-curso campo-editavel-curso text-2xl font-extrabold text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME DO CURSO..." contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterCurso(event)" oninput="forcarMaiusculaCurso(event)" onblur="salvarDadosNoFirebase()">TURMAS DO CURSO DE NOVO CURSO</h2>
                     </div>
                 </div>
                 <div onclick="event.stopPropagation()" class="acoes-curso opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute right-6 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg border border-slate-200 shadow-sm z-10">
@@ -510,9 +516,8 @@
                 h2.focus();
             } else {
                 h2.innerText = h2.innerText.toUpperCase();
+                salvarDadosNoFirebase(); // Salva só após finalizar a edição
             }
-
-            salvarDadosNoFirebase();
         }
 
         function forcarMaiusculaCurso(e) {
@@ -528,12 +533,12 @@
                     sel.addRange(newRange);
                 }
             }
-            salvarDadosNoFirebase();
         }
 
         function verificarEnterCurso(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                e.target.blur();
                 toggleEdicaoCurso(e.target.closest('.item-curso').querySelector('.btn-toggle-edit-curso'));
             }
         }
@@ -586,16 +591,16 @@
                             <option value="Em processo de venda">Em processo de venda</option>
                         </select>
                     </div>
-                    <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME TURMA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)"></h2>
+                    <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME TURMA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)" onblur="salvarTurmasDoCursoAtual()"></h2>
                     <div class="text-xs text-slate-500 mt-0.5 flex flex-col gap-0.5">
-                        <div>Início: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)"></span></div>
-                        <div>Prev. Término: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)"></span></div>
+                        <div>Início: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)" onblur="salvarTurmasDoCursoAtual()"></span></div>
+                        <div>Prev. Término: <span class="campo-editavel campo-data outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="aplicarMascaraData(event)" onblur="salvarTurmasDoCursoAtual()"></span></div>
                     </div>
                     <div class="juncao-container text-xs text-indigo-600 font-medium mt-1">
                         <span class="juncao-texto hidden"><i class="fa-solid fa-code-merge mr-1"></i>Junta com: <strong class="juncao-codigo"></strong></span>
                         <div class="juncao-input hidden mt-0.5" onclick="event.stopPropagation()">
                             <label class="text-[10px] text-slate-400 block">Juntar turma com:</label>
-                            <input type="text" placeholder="Ex: EDG42-M" onkeydown="verificarEnter(event)" oninput="atualizarJuncao(this)" class="w-full text-xs p-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 uppercase" />
+                            <input type="text" placeholder="Ex: EDG42-M" onkeydown="verificarEnter(event)" oninput="atualizarJuncao(this)" onblur="salvarTurmasDoCursoAtual()" class="w-full text-xs p-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 uppercase" />
                         </div>
                     </div>
                 </div>
@@ -606,7 +611,7 @@
                             <option value="Matutino">Matutino</option><option value="Vespertino">Vespertino</option><option value="Noturno" selected>Noturno</option>
                         </select>
                     </div>
-                    <span class="campo-editavel outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="0 Alunos" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)"></span>
+                    <span class="campo-editavel outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="0 Alunos" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" onblur="salvarTurmasDoCursoAtual()"></span>
                 </div>`;
 
             document.getElementById('grid-turmas').insertBefore(novoCard, document.getElementById('btn-adicionar'));
@@ -666,12 +671,14 @@
             if (editando && juncaoInput.querySelector('input').value.trim()) juncaoTexto.classList.remove('hidden');
             else juncaoTexto.classList.add('hidden');
 
+            // Salva as alterações ao desativar a edição
             salvarTurmasDoCursoAtual();
         }
 
         function verificarEnter(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                e.target.blur();
                 toggleEdicao(e.target.closest('.card-turma').querySelector('.btn-toggle-edit'));
             }
         }
@@ -690,7 +697,6 @@
 
         function atualizarJuncao(input) {
             input.closest('.card-turma').querySelector('.juncao-codigo').innerText = input.value.toUpperCase();
-            salvarTurmasDoCursoAtual();
         }
 
         function removerTurma(botao) {
@@ -749,7 +755,6 @@
             const container = document.getElementById('lista-disciplinas');
             container.innerHTML = htmlDisc;
 
-            // Restaura estado dos selects nas disciplinas
             container.querySelectorAll('.item-disciplina').forEach(item => {
                 const select = item.querySelector('select');
                 if (select) {
@@ -773,17 +778,16 @@
             novaDisc.innerHTML = `
                 <div class="flex items-center gap-2.5">
                     <i draggable="true" class="drag-handle fa-solid fa-grip-vertical text-slate-300 hover:text-slate-600 text-xs cursor-grab active:cursor-grabbing p-1"></i>
-                    <!-- BOLINHA DE STATUS CORRESPONDENTE AO LADO DO ARRASTAR -->
                     <span class="bolinha-status w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0" title="Status"></span>
                     
                     <div class="text-xs text-slate-700 flex items-center flex-wrap gap-x-1.5">
-                        <strong class="campo-editavel text-sm font-semibold text-slate-900 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="Nova Disciplina" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)"></strong>
+                        <strong class="campo-editavel text-sm font-semibold text-slate-900 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="Nova Disciplina" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" onblur="salvarDisciplinasAtual()"></strong>
                         <span class="text-slate-300 hidden sm:inline">|</span>
-                        <span class="text-slate-600">Instrutor (a): <strong class="campo-instrutor campo-editavel font-medium text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="A definir" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)"></strong></span>
+                        <span class="text-slate-600">Instrutor (a): <strong class="campo-instrutor campo-editavel font-medium text-slate-800 outline-none rounded px-1 focus:ring-2 focus:ring-blue-400" data-placeholder="A definir" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" onblur="salvarDisciplinasAtual()"></strong></span>
                         <span class="text-slate-300 hidden sm:inline">|</span>
                         <span class="text-slate-500 text-xs flex items-center gap-1">
-                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)"></span> a
-                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)"></span>
+                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)" onblur="salvarDisciplinasAtual()"></span> a
+                            <span class="campo-editavel campo-data outline-none rounded px-0.5 focus:ring-2 focus:ring-blue-400" data-placeholder="DD/MM/AAAA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnterDisciplina(event)" oninput="aplicarMascaraData(event)" onblur="salvarDisciplinasAtual()"></span>
                         </span>
                     </div>
                 </div>
@@ -806,17 +810,14 @@
             salvarDisciplinasAtual();
         }
 
-        // CORREÇÃO: Atualiza a bolinha ao lado do arrastar e salva o atributo data-status para persistência da nomenclatura do select
         function alterarStatusBordaDisciplina(select) {
             const item = select.closest('.item-disciplina');
             const val = select.value;
             const bolinha = item.querySelector('.bolinha-status');
 
-            // Persiste a escolha do select na tag do DOM
             select.setAttribute('data-status', val);
             select.querySelector(`option[value="${val}"]`)?.setAttribute('selected', 'selected');
 
-            // Altera a cor da bolinha ao lado do arrastar
             bolinha.className = 'bolinha-status w-2.5 h-2.5 rounded-full shrink-0 transition-colors';
             if (val === 'sem-instrutor') {
                 bolinha.classList.add('bg-amber-400');
@@ -838,15 +839,16 @@
             botao.classList.toggle('text-slate-400', editando);
             acoes.classList.toggle('!opacity-100', !editando);
             item.querySelectorAll('.campo-editavel').forEach(c => c.setAttribute('contenteditable', (!editando).toString()));
+            
             salvarDisciplinasAtual();
         }
 
         function verificarEnterDisciplina(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                e.target.blur();
                 toggleEdicaoDisciplina(e.target.closest('.item-disciplina').querySelector('.btn-toggle-edit'));
             }
-            salvarDisciplinasAtual();
         }
 
         function removerDisciplina(botao) {
@@ -868,7 +870,6 @@
                     sel.addRange(newRange);
                 }
             }
-            salvarTurmasDoCursoAtual();
         }
 
         function aplicarMascaraData(e) {
@@ -885,7 +886,6 @@
                 sel.removeAllRanges();
                 sel.addRange(range);
             }
-            salvarDisciplinasAtual();
         }
 
         const interceptaCliqueEditavel = e => e.currentTarget.getAttribute('contenteditable') === 'true' && e.stopPropagation();
