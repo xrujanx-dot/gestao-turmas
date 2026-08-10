@@ -1171,7 +1171,8 @@
             const valorSalvo = selProf.getAttribute('data-selecionado') || selProf.value;
             selProf.innerHTML = `<option value="A DEFINIR">A DEFINIR</option>`;
 
-            const listaProfs = dadosSistema[cursoAtualId]?.listaProfessores || [];
+            // Ordena os professores de A a Z
+            const listaProfs = [...(dadosSistema[cursoAtualId]?.listaProfessores || [])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
             listaProfs.forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p;
@@ -1189,7 +1190,8 @@
             const valorSalvo = selDisc.getAttribute('data-selecionado') || selDisc.value;
             selDisc.innerHTML = `<option value="NOVA DISCIPLINA">NOVA DISCIPLINA</option>`;
 
-            const listaDiscs = dadosSistema[cursoAtualId]?.listaDisciplinas || [];
+            // Ordena as disciplinas de A a Z
+            const listaDiscs = [...(dadosSistema[cursoAtualId]?.listaDisciplinas || [])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
             listaDiscs.forEach(d => {
                 const opt = document.createElement('option');
                 opt.value = d;
