@@ -26,6 +26,45 @@
 </head>
 <body class="bg-slate-100 min-h-screen p-8 text-slate-800">
 
+    <!-- TELA DE SELEÇÃO E CRIAÇÃO DE UNIDADES -->
+    <div id="modal-selecionar-unidade" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-200">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-black text-slate-900">Selecione a Unidade</h2>
+                <p class="text-xs text-slate-500 mt-1">Escolha uma unidade existente e digite o código de acesso, ou crie uma nova unidade.</p>
+            </div>
+
+            <!-- Seção 1: Entrar em Unidade Existente -->
+            <div class="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <label class="block text-xs font-bold text-slate-700 mb-2">Unidades Disponíveis:</label>
+                <select id="select-unidades-existentes" class="w-full text-sm p-2.5 border border-slate-300 rounded-lg bg-white mb-3 focus:ring-2 focus:ring-blue-500">
+                    <!-- Opções carregadas via Firestore -->
+                </select>
+                <div class="flex gap-2">
+                    <input type="password" id="input-codigo-acesso" placeholder="Código de Acesso" class="flex-1 text-sm p-2 border border-slate-300 rounded-lg">
+                    <button onclick="entrarNaUnidade()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow transition-colors">Entrar</button>
+                </div>
+                <p id="erro-codigo-unidade" class="text-xs text-red-500 hidden mt-1">Código incorreto ou unidade inválida.</p>
+            </div>
+
+            <div class="relative flex py-2 items-center mb-4">
+                <div class="flex-grow border-t border-slate-200"></div>
+                <span class="flex-shrink mx-4 text-xs font-semibold text-slate-400">OU</span>
+                <div class="flex-grow border-t border-slate-200"></div>
+            </div>
+
+            <!-- Seção 2: Criar Nova Unidade -->
+            <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                <h3 class="text-xs font-bold text-blue-900 mb-2">Criar Nova Unidade (Salvo na sua Conta)</h3>
+                <div class="flex flex-col gap-2">
+                    <input type="text" id="input-nome-nova-unidade" placeholder="Ex: Unidade Montese" class="text-sm p-2 border border-slate-300 rounded-lg uppercase">
+                    <input type="password" id="input-codigo-nova-unidade" placeholder="Definir Código de Acesso" class="text-sm p-2 border border-slate-300 rounded-lg">
+                    <button onclick="criarNovaUnidade()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow transition-colors mt-1">Criar Unidade</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TELA 1: CURSOS (PÁGINA INICIAL) -->
     <div id="tela-cursos" class="max-w-7xl mx-auto">
         <header class="mb-8 border-b pb-4 flex justify-between items-center flex-wrap gap-4">
@@ -46,10 +85,10 @@
 
                     <div class="flex flex-col text-right">
                         <span id="user-name" class="text-xs font-bold text-slate-800"></span>
-                        <span id="operador-nome" class="text-[11px] text-blue-600 font-semibold">Operador: Padrão</span>
+                        <span id="unidade-nome-atual" class="text-[11px] text-blue-600 font-semibold">Unidade: -</span>
                     </div>
-                    <button onclick="abrirModalCriarUsuario()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-1.5 px-3 rounded-lg border border-blue-200 transition-colors flex items-center gap-1">
-                        <i class="fa-solid fa-user-plus"></i> Mudar Usuário
+                    <button onclick="abrirModalSelecaoUnidade()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-1.5 px-3 rounded-lg border border-blue-200 transition-colors flex items-center gap-1">
+                        <i class="fa-solid fa-building"></i> Trocar Unidade
                     </button>
                     <button onclick="abrirModalConfiguracoes()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1">
                         <i class="fa-solid fa-gear"></i> Configurações
@@ -240,33 +279,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE CRIAR USUÁRIO PERSONALIZADO -->
-    <div id="modal-criar-usuario" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border-2 border-slate-300">
-            <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-4"><i class="fa-solid fa-user-gear text-2xl"></i></div>
-            <h3 class="text-xl font-bold text-slate-900 mb-1">Identificação de Usuário</h3>
-            <p class="text-xs text-slate-500 mb-4">Insira o seu nome de operador e a senha master para autenticar.</p>
-            
-            <div class="mb-3">
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Seu Nome / Apelido:</label>
-                <input type="text" id="input-nome-operador" placeholder="Ex: Maria - Secretaria" class="w-full text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-
-            <div class="mb-4">
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Senha Master:</label>
-                <input type="password" id="input-senha-master-user" placeholder="****" class="w-full text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <p id="erro-senha-user" class="text-xs text-red-500 hidden mt-1">Senha master incorreta.</p>
-            </div>
-
-            <div class="flex justify-end gap-3">
-                <button onclick="fecharModalCriarUsuario()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
-                <button onclick="salvarNovoOperador()" class="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow">
-                    Confirmar
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL DE EXCLUSÃO DE TURMA -->
     <div id="modal-excluir" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-100">
@@ -321,7 +333,9 @@
         const auth = firebase.auth(), db = firebase.firestore(), provider = new firebase.auth.GoogleAuthProvider();
         
         let usuarioAtual = null;
-        let nomeOperador = localStorage.getItem('operador_nome') || 'Operador';
+        let unidadeAtualId = null;
+        let donoUnidadeEmail = null; // E-mail onde os dados estão efetivamente gravados/salvos
+        let nomeOperador = '';
         let cursoAtualId = null;
         let turmaAtualId = null;
         let cardParaRemover = null;
@@ -355,47 +369,109 @@
             if (user) {
                 btnLogin?.classList.add('hidden');
                 userInfo?.classList.remove('hidden');
-                if (userName) userName.innerText = user.displayName;
-                document.getElementById('operador-nome').innerText = `Operador: ${nomeOperador}`;
-                conectarAoFirestoreCompartilhado();
+                if (userName) userName.innerText = user.displayName || user.email;
+                nomeOperador = user.displayName || user.email;
+                
+                carregarListaUnidadesDisponiveis();
+                document.getElementById('modal-selecionar-unidade').classList.remove('hidden');
                 iniciarPresencaOnline();
             } else {
                 btnLogin?.classList.remove('hidden');
                 userInfo?.classList.add('hidden');
+                document.getElementById('modal-selecionar-unidade').classList.add('hidden');
                 if(unsubscribeFirestore) unsubscribeFirestore();
             }
         });
 
-        // USUÁRIO PERSONALIZADO
-        function abrirModalCriarUsuario() {
-            document.getElementById('input-nome-operador').value = nomeOperador;
-            document.getElementById('input-senha-master-user').value = '';
-            document.getElementById('erro-senha-user').classList.add('hidden');
-            document.getElementById('modal-criar-usuario').classList.remove('hidden');
+        function abrirModalSelecaoUnidade() {
+            carregarListaUnidadesDisponiveis();
+            document.getElementById('modal-selecionar-unidade').classList.remove('hidden');
         }
 
-        function fecharModalCriarUsuario() {
-            document.getElementById('modal-criar-usuario').classList.add('hidden');
-        }
-
-        function salvarNovoOperador() {
-            const novoNome = document.getElementById('input-nome-operador').value.trim();
-            const senha = document.getElementById('input-senha-master-user').value;
-
-            if (senha === SENHA_MASTER) {
-                if (novoNome) {
-                    nomeOperador = novoNome;
-                    localStorage.setItem('operador_nome', nomeOperador);
-                    document.getElementById('operador-nome').innerText = `Operador: ${nomeOperador}`;
-                    atualizarLocalizacaoPresenca();
+        function carregarListaUnidadesDisponiveis() {
+            db.collection('unidades_cadastradas').onSnapshot(snapshot => {
+                const select = document.getElementById('select-unidades-existentes');
+                select.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const opt = document.createElement('option');
+                    opt.value = doc.id;
+                    opt.innerText = `${data.nome} (Criado por: ${data.donoEmail})`;
+                    opt.setAttribute('data-dono', data.donoEmail);
+                    opt.setAttribute('data-codigo', data.codigoAcesso);
+                    select.appendChild(opt);
+                });
+                if(select.children.length === 0) {
+                    select.innerHTML = `<option value="">Nenhuma unidade criada ainda</option>`;
                 }
-                fecharModalCriarUsuario();
+            });
+        }
+
+        function criarNovaUnidade() {
+            if (!usuarioAtual) {
+                alert("Você precisa estar logado com a conta do Google para criar uma unidade!");
+                return;
+            }
+
+            const nome = document.getElementById('input-nome-nova-unidade').value.trim().toUpperCase();
+            const codigo = document.getElementById('input-codigo-nova-unidade').value.trim();
+
+            if (!nome || !codigo) {
+                alert("Preencha o nome da unidade e o código de acesso!");
+                return;
+            }
+
+            const unitId = 'unidade_' + Date.now();
+            const payload = {
+                nome: nome,
+                codigoAcesso: codigo,
+                donoEmail: usuarioAtual.email,
+                criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Registra a unidade globalmente com vínculo ao e-mail do criador
+            db.collection('unidades_cadastradas').doc(unitId).set(payload).then(() => {
+                alert("Unidade criada com sucesso!");
+                document.getElementById('input-nome-nova-unidade').value = '';
+                document.getElementById('input-codigo-nova-unidade').value = '';
+                
+                // Entra diretamente na unidade criada
+                selecionarEConectarUnidade(unitId, usuarioAtual.email, nome);
+            }).catch(err => {
+                alert("Erro ao criar unidade: " + err.message);
+            });
+        }
+
+        function entrarNaUnidade() {
+            const select = document.getElementById('select-unidades-existentes');
+            const selectedOption = select.options[select.selectedIndex];
+            if(!selectedOption || !selectedOption.value) return;
+
+            const codigoDigitado = document.getElementById('input-codigo-acesso').value.trim();
+            const codigoCorreto = selectedOption.getAttribute('data-codigo');
+            const donoEmail = selectedOption.getAttribute('data-dono');
+            const nomeUnidade = selectedOption.innerText.split(' (Criado por:')[0];
+
+            if (codigoDigitado === codigoCorreto) {
+                document.getElementById('erro-codigo-unidade').classList.add('hidden');
+                document.getElementById('input-codigo-acesso').value = '';
+                selecionarEConectarUnidade(selectedOption.value, donoEmail, nomeUnidade);
             } else {
-                document.getElementById('erro-senha-user').classList.remove('hidden');
+                document.getElementById('erro-codigo-unidade').classList.remove('hidden');
             }
         }
 
-        // SISTEMA DE PRESENÇA EM TEMPO REAL (Filtrado estritamente por Gmail de Login)
+        function selecionarEConectarUnidade(unitId, emailDono, nomeUnidade) {
+            unidadeAtualId = unitId;
+            donoUnidadeEmail = emailDono;
+
+            document.getElementById('unidade-nome-atual').innerText = `Unidade: ${nomeUnidade}`;
+            document.getElementById('modal-selecionar-unidade').classList.add('hidden');
+
+            conectarAoFirestoreCompartilhado();
+        }
+
+        // SISTEMA DE PRESENÇA EM TEMPO REAL
         function iniciarPresencaOnline() {
             if (!usuarioAtual) return;
             atualizarLocalizacaoPresenca();
@@ -405,7 +481,6 @@
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Só contabiliza se for o mesmo Gmail da conta autenticada e estiver ativo nos últimos 2 min
                     if (data.userEmail === usuarioAtual.email && data.timestamp && (Date.now() - data.timestamp.toMillis() < 120000)) {
                         countLogadosGmail++;
                     }
@@ -432,30 +507,31 @@
             }).catch(e => console.error("Erro ao registrar presença:", e));
         }
 
-        // SINCRONIZAÇÃO COMPARTILHADA NO FIRESTORE (Isolada estritamente por e-mail autenticado)
+        // SINCRONIZAÇÃO COMPARTILHADA NO FIRESTORE
         function conectarAoFirestoreCompartilhado() {
-            if (!usuarioAtual || !usuarioAtual.email) return;
+            if (!usuarioAtual || !donoUnidadeEmail) return;
 
-            // Transforma o e-mail em uma chave válida para o Firestore
-            const emailKey = usuarioAtual.email.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
+            const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
+
+            if (unsubscribeFirestore) unsubscribeFirestore();
 
             unsubscribeFirestore = db.collection('usuarios_escola').doc(emailKey).onSnapshot(doc => {
                 if (usuarioEstaEditando()) return;
 
                 if (doc.exists) {
                     const data = doc.data();
-                    if (data.dadosSistema) dadosSistema = data.dadosSistema;
-                    if (data.historicoEdicao) historicoEdicao = data.historicoEdicao;
-                    if (data.turmasApagadas) turmasApagadas = data.turmasApagadas;
+                    dadosSistema = data.dadosSistema || {};
+                    historicoEdicao = data.historicoEdicao || [];
+                    turmasApagadas = data.turmasApagadas || [];
 
-                    if (data.listaCursosHTML) {
+                    if (data.listaCursosHTML && data.listaCursosHTML.trim() !== "") {
                         document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
                         inicializarDragAndDropCursos();
                     }
                     
-                    if (cursoAtualId && document.getElementById('tela-turmas').classList.contains('hidden') === false) {
+                    if (cursoAtualId && !document.getElementById('tela-turmas').classList.contains('hidden')) {
                         carregarTurmasNaTela();
-                    } else if (turmaAtualId && document.getElementById('tela-disciplinas').classList.contains('hidden') === false) {
+                    } else if (turmaAtualId && !document.getElementById('tela-disciplinas').classList.contains('hidden')) {
                         carregarDisciplinasNaTela();
                     }
                 }
@@ -475,22 +551,28 @@
         }
 
         function salvarDadosNoFirebase(acaoHistorico = null) {
-            if (!usuarioAtual || !usuarioAtual.email) return;
+            if (!usuarioAtual || !donoUnidadeEmail) return;
             
+            // TRAVA DE SEGURANÇA CONTRA APAGAMENTO
+            if (Object.keys(dadosSistema).length === 0 && document.getElementById('lista-cursos').children.length === 0) {
+                console.warn("Salvamento automático bloqueado para proteger os dados no Firestore.");
+                return;
+            }
+
             if (acaoHistorico) {
                 registrarHistorico(acaoHistorico);
             }
 
-            const emailKey = usuarioAtual.email.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
+            const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
 
             db.collection('usuarios_escola').doc(emailKey).set({
-                dadosSistema,
-                historicoEdicao,
-                turmasApagadas,
+                dadosSistema: dadosSistema,
+                historicoEdicao: historicoEdicao,
+                turmasApagadas: turmasApagadas,
                 listaCursosHTML: document.getElementById('lista-cursos').innerHTML,
                 ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
-                editadoPor: nomeOperador
-            }).catch(err => console.error("Erro ao salvar:", err));
+                editadoPor: usuarioAtual.email
+            }, { merge: true }).catch(err => console.error("Erro ao salvar:", err));
         }
 
         function salvarTurmasDoCursoAtual() {
@@ -508,7 +590,6 @@
             if (cursoAtualId && turmaAtualId) {
                 garantirEstruturaCurso(cursoAtualId);
                 
-                // Grava o valor selecionado nos selects para persistência
                 const container = document.getElementById('lista-disciplinas');
                 container.querySelectorAll('.item-disciplina').forEach(item => {
                     const selProf = item.querySelector('.select-instrutor');
@@ -594,7 +675,6 @@
                 renderizarItensListaModal();
                 input.value = '';
                 
-                // Recarrega disciplinas caso a tela de disciplinas esteja visível
                 if (turmaAtualId) carregarDisciplinasNaTela();
             }
         }
@@ -615,7 +695,6 @@
 
         // PAINEL DE CONFIGURAÇÕES
         function abrirModalConfiguracoes() {
-            // Tabela Histórico
             const tabelaHist = document.getElementById('tabela-historico-edicao');
             tabelaHist.innerHTML = '';
             if (historicoEdicao.length === 0) {
@@ -629,7 +708,6 @@
                 });
             }
 
-            // Tabela Apagadas
             const tabelaApagadas = document.getElementById('tabela-turmas-apagadas');
             tabelaApagadas.innerHTML = '';
             if (turmasApagadas.length === 0) {
@@ -687,7 +765,6 @@
 
                 textoFinal += `--- DISCIPLINAS E PROFESSORES ---\n`;
                 
-                // Encontrar id da turma
                 const containerDisc = document.createElement('div');
                 let achouDisc = false;
                 for (let tId in dadosSistema[cursoAtualId].disciplinas) {
@@ -738,7 +815,6 @@
             }
             grid.appendChild(btnAdd);
 
-            // Popula o select de download de turmas na tela de Turmas
             const selectTurma = document.getElementById('select-turma-download');
             if (selectTurma) {
                 selectTurma.innerHTML = '';
@@ -919,7 +995,7 @@
             });
         }
 
-        // LÓGICA DE DIA SELECIONADO (QUADRADINHOS DE DIAS DA SEMANA)
+        // LÓGICA DE DIA SELECIONADO
         function toggleDiaSemana(btn, e) {
             e.stopPropagation();
             btn.classList.toggle('bg-blue-600');
@@ -956,7 +1032,6 @@
                     </div>
                     <h2 class="campo-editavel text-2xl font-bold text-slate-800 tracking-wide outline-none rounded px-1 -ml-1 focus:ring-2 focus:ring-blue-400 uppercase" data-placeholder="NOME TURMA" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" oninput="forcarMaiuscula(event)" onblur="salvarTurmasDoCursoAtual(); carregarTurmasNaTela();"></h2>
                     
-                    <!-- QUADRADINHOS MINIMALISTAS DOS DIAS DA SEMANA -->
                     <div class="dias-semana-container flex items-center gap-1 my-2" onclick="event.stopPropagation()">
                         <button type="button" onclick="toggleDiaSemana(this, event)" class="w-6 h-6 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 flex items-center justify-center transition-colors hover:border-blue-400">S</button>
                         <button type="button" onclick="toggleDiaSemana(this, event)" class="w-6 h-6 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold text-slate-500 flex items-center justify-center transition-colors hover:border-blue-400">T</button>
@@ -986,7 +1061,6 @@
                             <option value="Matutino">Matutino</option><option value="Vespertino">Vespertino</option><option value="Noturno" selected>Noturno</option>
                         </select>
                     </div>
-                    <!-- Nome "Alunos" Fixo -->
                     <div class="flex items-center gap-1">
                         <span class="campo-editavel outline-none rounded px-1 focus:ring-2 focus:ring-blue-400 font-bold text-slate-700" data-placeholder="0" contenteditable="false" onclick="interceptaCliqueEditavel(event)" onkeydown="verificarEnter(event)" onblur="salvarTurmasDoCursoAtual()">0</span>
                         <span>Alunos</span>
@@ -1116,7 +1190,6 @@
             if (cardParaRemover) { 
                 const nomeTurma = cardParaRemover.querySelector('h2')?.innerText.trim() || 'Sem nome';
                 
-                // Registra em Turmas Apagadas nas Configurações
                 turmasApagadas.unshift({
                     nome: nomeTurma,
                     dataExclusao: new Date().toLocaleString('pt-BR'),
@@ -1149,7 +1222,6 @@
             const container = document.getElementById('lista-disciplinas');
             container.innerHTML = htmlDisc;
 
-            // Restaura estado dos selects de disciplina, instrutor e status
             container.querySelectorAll('.item-disciplina').forEach(item => {
                 const selectStatus = item.querySelector('.select-status-disciplina');
                 if (selectStatus) {
@@ -1157,9 +1229,7 @@
                     if (statusSalvo) selectStatus.value = statusSalvo;
                 }
 
-                // Atualizar / popular selects de instrutores
                 atualizarOptionsSelectInstrutor(item);
-                // Atualizar / popular selects de nomes das disciplinas
                 atualizarOptionsSelectDisciplina(item);
             });
         }
@@ -1171,7 +1241,6 @@
             const valorSalvo = selProf.getAttribute('data-selecionado') || selProf.value;
             selProf.innerHTML = `<option value="A DEFINIR">A DEFINIR</option>`;
 
-            // Ordena os professores de A a Z
             const listaProfs = [...(dadosSistema[cursoAtualId]?.listaProfessores || [])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
             listaProfs.forEach(p => {
                 const opt = document.createElement('option');
@@ -1190,7 +1259,6 @@
             const valorSalvo = selDisc.getAttribute('data-selecionado') || selDisc.value;
             selDisc.innerHTML = `<option value="NOVA DISCIPLINA">NOVA DISCIPLINA</option>`;
 
-            // Ordena as disciplinas de A a Z
             const listaDiscs = [...(dadosSistema[cursoAtualId]?.listaDisciplinas || [])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
             listaDiscs.forEach(d => {
                 const opt = document.createElement('option');
@@ -1222,14 +1290,12 @@
                     <span class="bolinha-status w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0" title="Status"></span>
                     
                     <div class="text-xs text-slate-700 flex items-center flex-wrap gap-x-1.5 w-full">
-                        <!-- Lista Suspensa Nome da Disciplina -->
                         <select onchange="salvarDisciplinasAtual()" class="select-nome-disciplina text-xs font-bold text-slate-900 border border-slate-200 rounded px-1 py-0.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-400">
                             <option value="NOVA DISCIPLINA">NOVA DISCIPLINA</option>
                         </select>
 
                         <span class="text-slate-300 hidden sm:inline">|</span>
                         
-                        <!-- Lista Suspensa Nome do Instrutor -->
                         <span class="text-slate-600 flex items-center gap-1">Instrutor (a): 
                             <select onchange="salvarDisciplinasAtual()" class="select-instrutor text-xs font-semibold text-slate-800 border border-slate-200 rounded px-1 py-0.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-400">
                                 <option value="A DEFINIR">A DEFINIR</option>
