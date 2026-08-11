@@ -507,7 +507,7 @@
             }).catch(e => console.error("Erro ao registrar presença:", e));
         }
 
-        // SINCRONIZAÇÃO COMPARTILHADA NO FIRESTORE
+        // 1. RECEBIMENTO EM TEMPO REAL PROTEGIDO CONTRA SOBRESCRITA DE TELA
         function conectarAoFirestoreCompartilhado() {
             if (!usuarioAtual || !donoUnidadeEmail) return;
 
@@ -516,23 +516,37 @@
             if (unsubscribeFirestore) unsubscribeFirestore();
 
             unsubscribeFirestore = db.collection('usuarios_escola').doc(emailKey).onSnapshot(doc => {
-                if (usuarioEstaEditando()) return;
-
                 if (doc.exists) {
                     const data = doc.data();
-                    dadosSistema = data.dadosSistema || {};
-                    historicoEdicao = data.historicoEdicao || [];
-                    turmasApagadas = data.turmasApagadas || [];
 
-                    if (data.listaCursosHTML && data.listaCursosHTML.trim() !== "") {
-                        document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
-                        inicializarDragAndDropCursos();
+                    // Merge dos dados de cursos para não apagar nada na memória local
+                    if (data.dadosSistema) {
+                        for (let idCurso in data.dadosSistema) {
+                            if (!dadosSistema[idCurso]) {
+                                dadosSistema[idCurso] = data.dadosSistema[idCurso];
+                            } else {
+                                Object.assign(dadosSistema[idCurso], data.dadosSistema[idCurso]);
+                            }
+                        }
                     }
-                    
-                    if (cursoAtualId && !document.getElementById('tela-turmas').classList.contains('hidden')) {
-                        carregarTurmasNaTela();
-                    } else if (turmaAtualId && !document.getElementById('tela-disciplinas').classList.contains('hidden')) {
-                        carregarDisciplinasNaTela();
+
+                    if (data.historicoEdicao) historicoEdicao = data.historicoEdicao;
+                    if (data.turmasApagadas) turmasApagadas = data.turmasApagadas;
+
+                    // Só recarrega a tela se NINGUÉM no seu computador estiver com campo aberto/digitando
+                    const operadorDigitando = usuarioEstaEditando();
+
+                    if (!operadorDigitando) {
+                        if (data.listaCursosHTML && data.listaCursosHTML.trim() !== "") {
+                            document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
+                            inicializarDragAndDropCursos();
+                        }
+                        
+                        if (cursoAtualId && !document.getElementById('tela-turmas').classList.contains('hidden')) {
+                            carregarTurmasNaTela();
+                        } else if (turmaAtualId && !document.getElementById('tela-disciplinas').classList.contains('hidden')) {
+                            carregarDisciplinasNaTela();
+                        }
                     }
                 }
             });
@@ -550,6 +564,7 @@
             if (historicoEdicao.length > 50) historicoEdicao.pop();
         }
 
+        // 2. ENVIO ISOLADO POR CURSO (NÃO SOBRESCREVE CURSOS DE OUTROS OPERADORES)
         function salvarDadosNoFirebase(acaoHistorico = null) {
             if (!usuarioAtual || !donoUnidadeEmail) return;
             
@@ -565,14 +580,24 @@
 
             const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
 
-            db.collection('usuarios_escola').doc(emailKey).set({
-                dadosSistema: dadosSistema,
+            let payload = {
                 historicoEdicao: historicoEdicao,
                 turmasApagadas: turmasApagadas,
-                listaCursosHTML: document.getElementById('lista-cursos').innerHTML,
                 ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
                 editadoPor: usuarioAtual.email
-            }, { merge: true }).catch(err => console.error("Erro ao salvar:", err));
+            };
+
+            // Se estiver em um curso, atualiza APENAS aquele curso específico
+            if (cursoAtualId && dadosSistema[cursoAtualId]) {
+                payload[`dadosSistema.${cursoAtualId}`] = dadosSistema[cursoAtualId];
+            } else {
+                // Se estiver na tela inicial, salva a estrutura dos cursos
+                payload.dadosSistema = dadosSistema;
+                payload.listaCursosHTML = document.getElementById('lista-cursos').innerHTML;
+            }
+
+            db.collection('usuarios_escola').doc(emailKey).set(payload, { merge: true })
+                .catch(err => console.error("Erro ao salvar:", err));
         }
 
         function salvarTurmasDoCursoAtual() {
