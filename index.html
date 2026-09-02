@@ -564,7 +564,7 @@
             if (historicoEdicao.length > 50) historicoEdicao.pop();
         }
 
-        // 2. ENVIO ISOLADO POR CURSO (NÃO SOBRESCREVE CURSOS DE OUTROS OPERADORES)
+        // 2. ENVIO ISOLADO POR CURSO (COM SUPORTE A ARRAYS DE PROFESSORES/DISCIPLINAS)
         function salvarDadosNoFirebase(acaoHistorico = null) {
             if (!usuarioAtual || !donoUnidadeEmail) return;
             
@@ -587,17 +587,15 @@
                 editadoPor: usuarioAtual.email
             };
 
-            // Se estiver em um curso, atualiza APENAS aquele curso específico
-            if (cursoAtualId && dadosSistema[cursoAtualId]) {
-                payload[`dadosSistema.${cursoAtualId}`] = dadosSistema[cursoAtualId];
-            } else {
-                // Se estiver na tela inicial, salva a estrutura dos cursos
-                payload.dadosSistema = dadosSistema;
+            // Garante que todo o objeto de dados do sistema seja enviado corretamente para não perder arrays de listas
+            payload.dadosSistema = dadosSistema;
+
+            if (!cursoAtualId) {
                 payload.listaCursosHTML = document.getElementById('lista-cursos').innerHTML;
             }
 
             db.collection('usuarios_escola').doc(emailKey).set(payload, { merge: true })
-                .catch(err => console.error("Erro ao salvar:", err));
+                .catch(err => console.error("Erro ao salvar no Firestore:", err));
         }
 
         function salvarTurmasDoCursoAtual() {
