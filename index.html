@@ -375,6 +375,16 @@
             auth.signOut();
         };
 
+        // Escutador global da tecla ESC para sair da seleção de unidade e voltar ao login
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                const modalUnidade = document.getElementById('modal-selecionar-unidade');
+                if (modalUnidade && !modalUnidade.classList.contains('hidden')) {
+                    fazerLogout();
+                }
+            }
+        });
+
         auth.onAuthStateChanged(user => {
             const barraLogin = document.getElementById('barra-login-publica'), 
                   userInfo = document.getElementById('user-info'), 
@@ -646,7 +656,8 @@
                 if (btn) btn.remove();
                 dadosSistema[cursoAtualId].htmlTurmas = grid.innerHTML;
             }
-            salvarDadosNoFirebase("Alteração em Turmas");
+            // Salva as alterações silenciosamente no banco sem poluir o histórico de navegação
+            salvarDadosNoFirebase(null);
         }
 
         function salvarDisciplinasAtual() {
@@ -664,7 +675,8 @@
 
                 dadosSistema[cursoAtualId].disciplinas[turmaAtualId] = container.innerHTML;
             }
-            salvarDadosNoFirebase("Alteração em Disciplinas");
+            // Salva as alterações silenciosamente no banco sem poluir o histórico de navegação
+            salvarDadosNoFirebase(null);
         }
 
         function garantirEstruturaCurso(idCurso) {
@@ -859,20 +871,42 @@
                 
                 const containerDisc = document.createElement('div');
                 let achouDisc = false;
-                for (let tId in dadosSistema[cursoAtualId].disciplinas) {
-                    containerDisc.innerHTML = dadosSistema[cursoAtualId].disciplinas[tId];
-                    containerDisc.querySelectorAll('.item-disciplina').forEach(item => {
-                        const disc = item.querySelector('.select-nome-disciplina')?.value || item.querySelector('strong')?.innerText || 'Disciplina';
-                        const prof = item.querySelector('.select-instrutor')?.value || 'A definir';
-                        const datas = item.querySelectorAll('.campo-data');
-                        
-                        textoFinal += `- Disciplina: ${disc} | Instrutor(a): ${prof} | Período: ${datas[0]?.innerText || ''} a ${datas[1]?.innerText || ''}\n`;
-                        achouDisc = true;
-                    });
+                
+                // Mapeia todas as turmas para achar a correta pelo ID ou pelo DOM ativo
+                let htmlDisciplinasTarget = "";
+                if (turmaAtualId && document.getElementById('nome-turma-titulo')?.innerText.trim() === nomeTurma) {
+                    htmlDisciplinasTarget = document.getElementById('lista-disciplinas').innerHTML;
+                } else {
+                    for (let tId in dadosSistema[cursoAtualId].disciplinas) {
+                        htmlDisciplinasTarget += dadosSistema[cursoAtualId].disciplinas[tId];
+                    }
                 }
+
+                containerDisc.innerHTML = htmlDisciplinasTarget;
+                containerDisc.querySelectorAll('.item-disciplina').forEach(item => {
+                    const selDisc = item.querySelector('.select-nome-disciplina');
+                    const selProf = item.querySelector('.select-instrutor');
+
+                    // Captura o nome da disciplina correto
+                    const disc = selDisc?.getAttribute('data-selecionado') || selDisc?.value || 'Disciplina';
+                    // Captura o instrutor correto
+                    const prof = selProf?.getAttribute('data-selecionado') || selProf?.value || 'A DEFINIR';
+                    
+                    const datas = item.querySelectorAll('.campo-data');
+                    
+                    textoFinal += `- Disciplina: ${disc} | Instrutor(a): ${prof} | Período: ${datas[0]?.innerText || ''} a ${datas[1]?.innerText || ''}\n`;
+                    achouDisc = true;
+                });
+
                 if (!achouDisc) textoFinal += `Nenhuma disciplina registrada para esta turma.\n`;
             }
 
+            const blob = new Blob([textoFinal], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Turma_${nomeTurma.replace(/\s+/g, '_')}_Informacoes.txt`;
+            link.click();
+        }
             const blob = new Blob([textoFinal], { type: 'text/plain;charset=utf-8' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
