@@ -907,12 +907,6 @@
             link.download = `Turma_${nomeTurma.replace(/\s+/g, '_')}_Informacoes.txt`;
             link.click();
         }
-            const blob = new Blob([textoFinal], { type: 'text/plain;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `Turma_${nomeTurma.replace(/\s+/g, '_')}_Informacoes.txt`;
-            link.click();
-        }
 
         // LÓGICA DE CURSOS
         function abrirTurmasDoCurso(idCurso, elemento) {
