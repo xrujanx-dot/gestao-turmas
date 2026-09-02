@@ -699,13 +699,14 @@
                 return;
             }
 
+            // 1. Insere na lista na memória local
             lista.push(valor);
             renderizarItensListaModal();
             
             input.value = '';
             input.focus();
 
-            // Atualiza os seletores da tela na hora
+            // 2. Garante a atualização imediata do HTML da turma aberta para não perder a referência
             if (turmaAtualId) {
                 const container = document.getElementById('lista-disciplinas');
                 if (container) {
@@ -713,10 +714,12 @@
                         atualizarOptionsSelectInstrutor(item);
                         atualizarOptionsSelectDisciplina(item);
                     });
+                    // Grava o HTML atualizado com a nova opção dentro da estrutura do curso
                     dadosSistema[cursoAtualId].disciplinas[turmaAtualId] = container.innerHTML;
                 }
             }
 
+            // 3. Força a gravação direta no Firestore
             salvarDadosNoFirebase(`Adicionou na lista de ${tipoListaAtualModal}: ${valor}`);
         }
 
@@ -1289,12 +1292,13 @@
             const selProf = item.querySelector('.select-instrutor');
             if (!selProf) return;
 
-            // ADICIONADO: Limita a altura do menu e adiciona a barra de rolagem para listas grandes
+            // Mantém a rolagem ajustada para listas extensas
             selProf.style.maxHeight = '200px';
 
             const valorSalvo = selProf.getAttribute('data-selecionado') || selProf.value;
             selProf.innerHTML = `<option value="A DEFINIR">A DEFINIR</option>`;
 
+            // Ordena e monta os professores cadastrados na memória
             const listaProfs = [...(dadosSistema[cursoAtualId]?.listaProfessores || [])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
             listaProfs.forEach(p => {
                 const opt = document.createElement('option');
@@ -1303,7 +1307,11 @@
                 selProf.appendChild(opt);
             });
 
-            if (valorSalvo) selProf.value = valorSalvo;
+            // Restaura o valor previamente selecionado
+            if (valorSalvo) {
+                selProf.value = valorSalvo;
+                selProf.setAttribute('data-selecionado', valorSalvo);
+            }
         }
 
         function atualizarOptionsSelectDisciplina(item) {
