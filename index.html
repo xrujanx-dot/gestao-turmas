@@ -851,7 +851,9 @@
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = dadosSistema[cursoAtualId].htmlTurmas;
                 const cards = tempDiv.querySelectorAll('.card-turma');
+                let idTurmaAlvo = null;
                 
+                // 1. Localiza a turma selecionada e extrai os metadados
                 cards.forEach(card => {
                     if (card.querySelector('h2')?.innerText.trim() === nomeTurma) {
                         const status = card.querySelector('.badge-status')?.innerText || '-';
@@ -859,6 +861,11 @@
                         const alunos = card.querySelectorAll('.campo-editavel')[card.querySelectorAll('.campo-editavel').length - 1]?.innerText || '0';
                         const juncao = card.querySelector('.juncao-codigo')?.innerText || 'Nenhuma';
                         
+                        // Captura o ID da turma pelo atributo onclick do card
+                        const onclickAttr = card.getAttribute('onclick') || '';
+                        const match = onclickAttr.match(/abrirDisciplinas\('([^']+)'/);
+                        if (match) idTurmaAlvo = match[1];
+
                         textoFinal += `Status: ${status}\n`;
                         textoFinal += `Início: ${datas[0]?.innerText || '-'}\n`;
                         textoFinal += `Prev. Término: ${datas[1]?.innerText || '-'}\n`;
@@ -872,14 +879,12 @@
                 const containerDisc = document.createElement('div');
                 let achouDisc = false;
                 
-                // Mapeia todas as turmas para achar a correta pelo ID ou pelo DOM ativo
+                // 2. Extrai estritamente o HTML referente à turma identificada
                 let htmlDisciplinasTarget = "";
                 if (turmaAtualId && document.getElementById('nome-turma-titulo')?.innerText.trim() === nomeTurma) {
                     htmlDisciplinasTarget = document.getElementById('lista-disciplinas').innerHTML;
-                } else {
-                    for (let tId in dadosSistema[cursoAtualId].disciplinas) {
-                        htmlDisciplinasTarget += dadosSistema[cursoAtualId].disciplinas[tId];
-                    }
+                } else if (idTurmaAlvo && dadosSistema[cursoAtualId].disciplinas[idTurmaAlvo]) {
+                    htmlDisciplinasTarget = dadosSistema[cursoAtualId].disciplinas[idTurmaAlvo];
                 }
 
                 containerDisc.innerHTML = htmlDisciplinasTarget;
@@ -887,11 +892,8 @@
                     const selDisc = item.querySelector('.select-nome-disciplina');
                     const selProf = item.querySelector('.select-instrutor');
 
-                    // Captura o nome da disciplina correto
                     const disc = selDisc?.getAttribute('data-selecionado') || selDisc?.value || 'Disciplina';
-                    // Captura o instrutor correto
                     const prof = selProf?.getAttribute('data-selecionado') || selProf?.value || 'A DEFINIR';
-                    
                     const datas = item.querySelectorAll('.campo-data');
                     
                     textoFinal += `- Disciplina: ${disc} | Instrutor(a): ${prof} | Período: ${datas[0]?.innerText || ''} a ${datas[1]?.innerText || ''}\n`;
@@ -900,6 +902,13 @@
 
                 if (!achouDisc) textoFinal += `Nenhuma disciplina registrada para esta turma.\n`;
             }
+
+            const blob = new Blob([textoFinal], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Turma_${nomeTurma.replace(/\s+/g, '_')}_Informacoes.txt`;
+            link.click();
+        }
 
             const blob = new Blob([textoFinal], { type: 'text/plain;charset=utf-8' });
             const link = document.createElement('a');
