@@ -202,7 +202,7 @@
             <p class="text-xs text-slate-500 mb-3">Esta lista é vinculada exclusivamente ao curso selecionado e estará disponível em todas as turmas dele.</p>
 
             <div class="flex gap-2 mb-4">
-                <input type="text" id="input-novo-item-lista" placeholder="Digitar nome..." class="flex-1 text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
+                <input type="text" id="input-novo-item-lista" placeholder="Digitar nome..." onkeydown="if(event.key==='Enter') adicionarItemNaLista()" class="flex-1 text-sm p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
                 <button onclick="adicionarItemNaLista()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow transition-colors">
                     Adicionar
                 </button>
@@ -694,14 +694,30 @@
                 ? dadosSistema[cursoAtualId].listaProfessores 
                 : dadosSistema[cursoAtualId].listaDisciplinas;
 
-            if (!lista.includes(valor)) {
-                lista.push(valor);
-                salvarDadosNoFirebase(`Adicionou na lista de ${tipoListaAtualModal}: ${valor}`);
-                renderizarItensListaModal();
-                input.value = '';
-                
-                if (turmaAtualId) carregarDisciplinasNaTela();
+            if (lista.includes(valor)) {
+                alert(`Este ${tipoListaAtualModal === 'professores' ? 'professor(a)' : 'item'} já está cadastrado nesta lista!`);
+                return;
             }
+
+            lista.push(valor);
+            renderizarItensListaModal();
+            
+            input.value = '';
+            input.focus();
+
+            // Atualiza os seletores da tela na hora
+            if (turmaAtualId) {
+                const container = document.getElementById('lista-disciplinas');
+                if (container) {
+                    container.querySelectorAll('.item-disciplina').forEach(item => {
+                        atualizarOptionsSelectInstrutor(item);
+                        atualizarOptionsSelectDisciplina(item);
+                    });
+                    dadosSistema[cursoAtualId].disciplinas[turmaAtualId] = container.innerHTML;
+                }
+            }
+
+            salvarDadosNoFirebase(`Adicionou na lista de ${tipoListaAtualModal}: ${valor}`);
         }
 
         function removerItemDaLista(index) {
@@ -712,12 +728,22 @@
 
             if (lista && index >= 0 && index < lista.length) {
                 const removido = lista.splice(index, 1);
-                salvarDadosNoFirebase(`Removeu da lista de ${tipoListaAtualModal}: ${removido[0]}`);
                 renderizarItensListaModal();
-                if (turmaAtualId) carregarDisciplinasNaTela();
+
+                if (turmaAtualId) {
+                    const container = document.getElementById('lista-disciplinas');
+                    if (container) {
+                        container.querySelectorAll('.item-disciplina').forEach(item => {
+                            atualizarOptionsSelectInstrutor(item);
+                            atualizarOptionsSelectDisciplina(item);
+                        });
+                        dadosSistema[cursoAtualId].disciplinas[turmaAtualId] = container.innerHTML;
+                    }
+                }
+
+                salvarDadosNoFirebase(`Removeu da lista de ${tipoListaAtualModal}: ${removido[0]}`);
             }
         }
-
         // PAINEL DE CONFIGURAÇÕES
         function abrirModalConfiguracoes() {
             const tabelaHist = document.getElementById('tabela-historico-edicao');
@@ -1262,6 +1288,9 @@
         function atualizarOptionsSelectInstrutor(item) {
             const selProf = item.querySelector('.select-instrutor');
             if (!selProf) return;
+
+            // ADICIONADO: Limita a altura do menu e adiciona a barra de rolagem para listas grandes
+            selProf.style.maxHeight = '200px';
 
             const valorSalvo = selProf.getAttribute('data-selecionado') || selProf.value;
             selProf.innerHTML = `<option value="A DEFINIR">A DEFINIR</option>`;
