@@ -66,6 +66,18 @@
     </div>
 
     <!-- TELA 1: CURSOS (PÁGINA INICIAL - ESCONDIDA POR PADRÃO) -->
+    <!-- BARRA DE AUTENTICAÇÃO PÚBLICA (VISÍVEL ANTES DE LOGAR) -->
+    <div id="barra-login-publica" class="max-w-7xl mx-auto mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center flex-wrap gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Gestão Acadêmica</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Grau Técnico Montese - Faça login com seu Gmail para acessar o sistema.</p>
+        </div>
+        <button onclick="fazerLoginGoogle()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-xl shadow transition-colors flex items-center gap-2 text-sm">
+            <i class="fa-brands fa-google"></i> Entrar com Google
+        </button>
+    </div>
+
+    <!-- TELA 1: CURSOS (PÁGINA INICIAL - LIBERADA APÓS AUTENTICAR) -->
     <div id="tela-cursos" class="max-w-7xl mx-auto hidden">
         <header class="mb-8 border-b pb-4 flex justify-between items-center flex-wrap gap-4">
             <div>
@@ -73,10 +85,7 @@
                 <p class="text-slate-600">Selecione um curso para gerenciar suas turmas - Grau Técnico Montese</p>
             </div>
             <div id="auth-container" class="flex items-center gap-3">
-                <button onclick="fazerLoginGoogle()" id="btn-login" class="bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2 px-4 border border-slate-300 rounded-lg shadow-sm flex items-center gap-2 text-sm transition-colors">
-                    <i class="fa-brands fa-google text-red-500"></i> Entrar com Google
-                </button>
-                <div id="user-info" class="hidden flex items-center gap-3">
+                <div id="user-info" class="flex items-center gap-3">
                     <!-- Contador visual de usuários online no mesmo Gmail -->
                     <div id="indicador-online-corpinho" class="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 py-1.5 px-3 rounded-lg text-xs font-semibold" title="Usuários conectados neste e-mail">
                         <i class="fa-solid fa-user text-emerald-600"></i>
@@ -367,7 +376,7 @@
         };
 
         auth.onAuthStateChanged(user => {
-            const btnLogin = document.getElementById('btn-login'), 
+            const barraLogin = document.getElementById('barra-login-publica'), 
                   userInfo = document.getElementById('user-info'), 
                   userName = document.getElementById('user-name'),
                   telaCursos = document.getElementById('tela-cursos');
@@ -375,17 +384,18 @@
             usuarioAtual = user;
 
             if (user) {
-                btnLogin?.classList.add('hidden');
+                // Esconde a barra publica e libera a interface logada
+                barraLogin?.classList.add('hidden');
                 userInfo?.classList.remove('hidden');
                 if (userName) userName.innerText = user.displayName || user.email;
                 nomeOperador = user.displayName || user.email;
 
-                // 3º ITEM: Liberar telas somente após login com o Gmail
+                // Liberar telas somente após login com o Gmail
                 telaCursos?.classList.remove('hidden');
                 
                 carregarListaUnidadesDisponiveis();
 
-                // 2º ITEM: Restaura sessão salva no F5 para não pedir código nem voltar ao início
+                // Restaura sessão salva no F5 para não pedir código nem voltar ao início
                 const sessaoSalva = sessionStorage.getItem('unidadeConectada');
                 if (sessaoSalva) {
                     try {
@@ -400,8 +410,8 @@
 
                 iniciarPresencaOnline();
             } else {
-                // Bloqueia acesso total sem login
-                btnLogin?.classList.remove('hidden');
+                // Bloqueia acesso total sem login e exibe apenas a barra de login
+                barraLogin?.classList.remove('hidden');
                 userInfo?.classList.add('hidden');
                 telaCursos?.classList.add('hidden');
                 document.getElementById('tela-turmas')?.classList.add('hidden');
