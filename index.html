@@ -27,7 +27,7 @@
 <body class="bg-slate-100 min-h-screen p-8 text-slate-800">
 
     <!-- TELA DE SELEÇÃO E CRIAÇÃO DE UNIDADES -->
-    <div id="modal-selecionar-unidade" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div id="modal-selecionar-unidade" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-200">
             <div class="text-center mb-6">
                 <h2 class="text-2xl font-black text-slate-900">Selecione a Unidade</h2>
@@ -41,7 +41,7 @@
                     <!-- Opções carregadas via Firestore -->
                 </select>
                 <div class="flex gap-2">
-                    <input type="password" id="input-codigo-acesso" placeholder="Código de Acesso" class="flex-1 text-sm p-2 border border-slate-300 rounded-lg">
+                    <input type="password" id="input-codigo-acesso" placeholder="Código de Acesso" onkeydown="if(event.key==='Enter') entrarNaUnidade()" class="flex-1 text-sm p-2 border border-slate-300 rounded-lg">
                     <button onclick="entrarNaUnidade()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow transition-colors">Entrar</button>
                 </div>
                 <p id="erro-codigo-unidade" class="text-xs text-red-500 hidden mt-1">Código incorreto ou unidade inválida.</p>
@@ -58,15 +58,15 @@
                 <h3 class="text-xs font-bold text-blue-900 mb-2">Criar Nova Unidade (Salvo na sua Conta)</h3>
                 <div class="flex flex-col gap-2">
                     <input type="text" id="input-nome-nova-unidade" placeholder="Ex: Unidade Montese" class="text-sm p-2 border border-slate-300 rounded-lg uppercase">
-                    <input type="password" id="input-codigo-nova-unidade" placeholder="Definir Código de Acesso" class="text-sm p-2 border border-slate-300 rounded-lg">
+                    <input type="password" id="input-codigo-nova-unidade" placeholder="Definir Código de Acesso" onkeydown="if(event.key==='Enter') criarNovaUnidade()" class="text-sm p-2 border border-slate-300 rounded-lg">
                     <button onclick="criarNovaUnidade()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow transition-colors mt-1">Criar Unidade</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- TELA 1: CURSOS (PÁGINA INICIAL) -->
-    <div id="tela-cursos" class="max-w-7xl mx-auto">
+    <!-- TELA 1: CURSOS (PÁGINA INICIAL - ESCONDIDA POR PADRÃO) -->
+    <div id="tela-cursos" class="max-w-7xl mx-auto hidden">
         <header class="mb-8 border-b pb-4 flex justify-between items-center flex-wrap gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-slate-900">Cursos Técnicos</h1>
@@ -359,26 +359,55 @@
             return active.isContentEditable || active.tagName === 'INPUT' || active.tagName === 'SELECT';
         }
 
-        // Autenticação
+       // Autenticação
         const fazerLoginGoogle = () => auth.signInWithPopup(provider).catch(e => alert("Erro ao fazer login: " + e.message));
-        const fazerLogout = () => auth.signOut();
+        const fazerLogout = () => {
+            sessionStorage.removeItem('unidadeConectada');
+            auth.signOut();
+        };
 
         auth.onAuthStateChanged(user => {
-            const btnLogin = document.getElementById('btn-login'), userInfo = document.getElementById('user-info'), userName = document.getElementById('user-name');
+            const btnLogin = document.getElementById('btn-login'), 
+                  userInfo = document.getElementById('user-info'), 
+                  userName = document.getElementById('user-name'),
+                  telaCursos = document.getElementById('tela-cursos');
+
             usuarioAtual = user;
+
             if (user) {
                 btnLogin?.classList.add('hidden');
                 userInfo?.classList.remove('hidden');
                 if (userName) userName.innerText = user.displayName || user.email;
                 nomeOperador = user.displayName || user.email;
+
+                // 3º ITEM: Liberar telas somente após login com o Gmail
+                telaCursos?.classList.remove('hidden');
                 
                 carregarListaUnidadesDisponiveis();
-                document.getElementById('modal-selecionar-unidade').classList.remove('hidden');
+
+                // 2º ITEM: Restaura sessão salva no F5 para não pedir código nem voltar ao início
+                const sessaoSalva = sessionStorage.getItem('unidadeConectada');
+                if (sessaoSalva) {
+                    try {
+                        const { unitId, emailDono, nomeUnidade } = JSON.parse(sessaoSalva);
+                        selecionarEConectarUnidade(unitId, emailDono, nomeUnidade);
+                    } catch (e) {
+                        document.getElementById('modal-selecionar-unidade').classList.remove('hidden');
+                    }
+                } else {
+                    document.getElementById('modal-selecionar-unidade').classList.remove('hidden');
+                }
+
                 iniciarPresencaOnline();
             } else {
+                // Bloqueia acesso total sem login
                 btnLogin?.classList.remove('hidden');
                 userInfo?.classList.add('hidden');
-                document.getElementById('modal-selecionar-unidade').classList.add('hidden');
+                telaCursos?.classList.add('hidden');
+                document.getElementById('tela-turmas')?.classList.add('hidden');
+                document.getElementById('tela-disciplinas')?.classList.add('hidden');
+                document.getElementById('modal-selecionar-unidade')?.classList.add('hidden');
+                
                 if(unsubscribeFirestore) unsubscribeFirestore();
             }
         });
@@ -429,13 +458,11 @@
                 criadoEm: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // Registra a unidade globalmente com vínculo ao e-mail do criador
             db.collection('unidades_cadastradas').doc(unitId).set(payload).then(() => {
                 alert("Unidade criada com sucesso!");
                 document.getElementById('input-nome-nova-unidade').value = '';
                 document.getElementById('input-codigo-nova-unidade').value = '';
                 
-                // Entra diretamente na unidade criada
                 selecionarEConectarUnidade(unitId, usuarioAtual.email, nome);
             }).catch(err => {
                 alert("Erro ao criar unidade: " + err.message);
@@ -464,6 +491,9 @@
         function selecionarEConectarUnidade(unitId, emailDono, nomeUnidade) {
             unidadeAtualId = unitId;
             donoUnidadeEmail = emailDono;
+
+            // Salva os dados na sessão local para persistência de F5
+            sessionStorage.setItem('unidadeConectada', JSON.stringify({ unitId, emailDono, nomeUnidade }));
 
             document.getElementById('unidade-nome-atual').innerText = `Unidade: ${nomeUnidade}`;
             document.getElementById('modal-selecionar-unidade').classList.add('hidden');
