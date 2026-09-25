@@ -557,57 +557,58 @@
             }).catch(e => console.error("Erro ao registrar presença:", e));
         }
 
-        // RECEBIMENTO EM TEMPO REAL CORRIGIDO (COM MERGE RECURSIVO DOS DADOS)
-function conectarAoFirestoreCompartilhado() {
-    if (!usuarioAtual || !donoUnidadeEmail) return;
+        // RECEBIMENTO EM TEMPO REAL COMPATÍVEL COM DADOS NA RAIZ E EM DADOSSISTEMA
+        function conectarAoFirestoreCompartilhado() {
+            if (!usuarioAtual || !donoUnidadeEmail) return;
 
-    const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
+            const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
 
-    if (unsubscribeFirestore) unsubscribeFirestore();
+            if (unsubscribeFirestore) unsubscribeFirestore();
 
-    unsubscribeFirestore = db.collection('usuarios_escola').doc(emailKey).onSnapshot(doc => {
-        if (doc.exists) {
-            const data = doc.data();
+            unsubscribeFirestore = db.collection('usuarios_escola').doc(emailKey).onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
 
-            // MESCLA SEGURA: Garante que os cursos e turmas salvos no Firestore sejam integrados
-            if (data.dadosSistema) {
-                for (let idCurso in data.dadosSistema) {
-                    if (!dadosSistema[idCurso]) {
-                        dadosSistema[idCurso] = data.dadosSistema[idCurso];
-                    } else {
-                        // Mescla turmas e disciplinas sem perder arrays locais
-                        dadosSistema[idCurso].htmlTurmas = data.dadosSistema[idCurso].htmlTurmas || dadosSistema[idCurso].htmlTurmas;
-                        dadosSistema[idCurso].disciplinas = Object.assign({}, dadosSistema[idCurso].disciplinas, data.dadosSistema[idCurso].disciplinas);
-                        dadosSistema[idCurso].listaProfessores = data.dadosSistema[idCurso].listaProfessores || dadosSistema[idCurso].listaProfessores;
-                        dadosSistema[idCurso].listaDisciplinas = data.dadosSistema[idCurso].listaDisciplinas || dadosSistema[idCurso].listaDisciplinas;
+                    // 1. Se os dados estiverem na estrutura nova (dadosSistema)
+                    if (data.dadosSistema) {
+                        dadosSistema = data.dadosSistema;
+                    }
+
+                    // 2. Compatibilidade: Se os dados estiverem gravados na raiz do Firebase
+                    if (data.htmlTurmas || data.disciplinas) {
+                        if (!dadosSistema['curso_edificacoes']) {
+                            dadosSistema['curso_edificacoes'] = { htmlTurmas: '', disciplinas: {}, listaProfessores: [], listaDisciplinas: [] };
+                        }
+                        
+                        dadosSistema['curso_edificacoes'].htmlTurmas = data.htmlTurmas || dadosSistema['curso_edificacoes'].htmlTurmas || '';
+                        dadosSistema['curso_edificacoes'].disciplinas = data.disciplinas || dadosSistema['curso_edificacoes'].disciplinas || {};
+                        dadosSistema['curso_edificacoes'].listaProfessores = data.listaProfessores || dadosSistema['curso_edificacoes'].listaProfessores || [];
+                        dadosSistema['curso_edificacoes'].listaDisciplinas = data.listaDisciplinas || dadosSistema['curso_edificacoes'].listaDisciplinas || [];
+                    }
+
+                    if (data.historicoEdicao) historicoEdicao = data.historicoEdicao;
+                    if (data.turmasApagadas) turmasApagadas = data.turmasApagadas;
+
+                    const operadorDigitando = usuarioEstaEditando();
+
+                    if (!operadorDigitando) {
+                        if (data.listaCursosHTML && data.listaCursosHTML.trim() !== "") {
+                            document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
+                            inicializarDragAndDropCursos();
+                        }
+                        
+                        // Recarrega as turmas ou disciplinas na tela atual
+                        if (cursoAtualId && !document.getElementById('tela-turmas').classList.contains('hidden')) {
+                            carregarTurmasNaTela();
+                        } else if (turmaAtualId && !document.getElementById('tela-disciplinas').classList.contains('hidden')) {
+                            carregarDisciplinasNaTela();
+                        }
                     }
                 }
-            }
-
-            if (data.historicoEdicao) historicoEdicao = data.historicoEdicao;
-            if (data.turmasApagadas) turmasApagadas = data.turmasApagadas;
-
-            const operadorDigitando = usuarioEstaEditando();
-
-            // Só atualiza a interface se o usuário não estiver no meio de uma digitação
-            if (!operadorDigitando) {
-                if (data.listaCursosHTML && data.listaCursosHTML.trim() !== "") {
-                    document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
-                    inicializarDragAndDropCursos();
-                }
-                
-                // Recarrega as turmas ou disciplinas na tela atual
-                if (cursoAtualId && !document.getElementById('tela-turmas').classList.contains('hidden')) {
-                    carregarTurmasNaTela();
-                } else if (turmaAtualId && !document.getElementById('tela-disciplinas').classList.contains('hidden')) {
-                    carregarDisciplinasNaTela();
-                }
-            }
+            }, err => {
+                console.error("Erro ao escutar atualizações do Firestore:", err);
+            });
         }
-    }, err => {
-        console.error("Erro ao escutar atualizações do Firestore:", err);
-    });
-}
 
         function registrarHistorico(acao) {
             if (!usuarioAtual) return;
