@@ -557,11 +557,10 @@
             }).catch(e => console.error("Erro ao registrar presença:", e));
         }
 
-        // 1. ESCUTADOR COMPATÍVEL E MULTI-UTILIZADOR
+        // 1. RECEBIMENTO EM TEMPO REAL PROTEGIDO CONTRA SOBRESCRITA DE TELA
         function conectarAoFirestoreCompartilhado() {
             if (!usuarioAtual || !donoUnidadeEmail) return;
 
-            // Chave FIXA do dono da unidade para TODOS os e-mails lerem do mesmo local
             const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
 
             if (unsubscribeFirestore) unsubscribeFirestore();
@@ -570,26 +569,21 @@
                 if (doc.exists) {
                     const data = doc.data();
 
-                    // 1. Formato novo (dadosSistema)
+                    // Merge dos dados de cursos para não apagar nada na memória local
                     if (data.dadosSistema) {
-                        dadosSistema = data.dadosSistema;
-                    }
-
-                    // 2. Formato antigo gravado na raiz do documento do Firebase
-                    if (data.htmlTurmas || data.disciplinas) {
-                        if (!dadosSistema['curso_edificacoes']) {
-                            dadosSistema['curso_edificacoes'] = { htmlTurmas: '', disciplinas: {}, listaProfessores: [], listaDisciplinas: [] };
+                        for (let idCurso in data.dadosSistema) {
+                            if (!dadosSistema[idCurso]) {
+                                dadosSistema[idCurso] = data.dadosSistema[idCurso];
+                            } else {
+                                Object.assign(dadosSistema[idCurso], data.dadosSistema[idCurso]);
+                            }
                         }
-                        
-                        dadosSistema['curso_edificacoes'].htmlTurmas = data.htmlTurmas || dadosSistema['curso_edificacoes'].htmlTurmas || '';
-                        dadosSistema['curso_edificacoes'].disciplinas = data.disciplinas || dadosSistema['curso_edificacoes'].disciplinas || {};
-                        dadosSistema['curso_edificacoes'].listaProfessores = data.listaProfessores || dadosSistema['curso_edificacoes'].listaProfessores || [];
-                        dadosSistema['curso_edificacoes'].listaDisciplinas = data.listaDisciplinas || dadosSistema['curso_edificacoes'].listaDisciplinas || [];
                     }
 
                     if (data.historicoEdicao) historicoEdicao = data.historicoEdicao;
                     if (data.turmasApagadas) turmasApagadas = data.turmasApagadas;
 
+                    // Só recarrega a tela se NINGUÉM no seu computador estiver com campo aberto/digitando
                     const operadorDigitando = usuarioEstaEditando();
 
                     if (!operadorDigitando) {
@@ -605,44 +599,9 @@
                         }
                     }
                 }
-            }, err => {
-                console.error("Erro ao escutar atualizações do Firestore:", err);
             });
         }
 
-        // 2. SALVAMENTO COMPARTILHADO (GRAVA NO DOCUMENTO DO DONO DA UNIDADE)
-        function salvarDadosNoFirebase(acaoHistorico = null) {
-            if (!usuarioAtual || !donoUnidadeEmail) return;
-
-            // Trava de segurança contra salvamento de objeto totalmente vazio
-            if (Object.keys(dadosSistema).length === 0) {
-                console.warn("Salvamento cancelado: dadosSistema está vazio.");
-                return;
-            }
-
-            if (acaoHistorico) {
-                registrarHistorico(acaoHistorico);
-            }
-
-            // Garante que o salvamento vá para o e-mail da unidade e não para o e-mail de quem está logado
-            const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
-
-            let payload = {
-                historicoEdicao: historicoEdicao,
-                turmasApagadas: turmasApagadas,
-                ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
-                editadoPor: usuarioAtual.email,
-                dadosSistema: dadosSistema
-            };
-
-            if (!cursoAtualId) {
-                payload.listaCursosHTML = document.getElementById('lista-cursos').innerHTML;
-            }
-
-            db.collection('usuarios_escola').doc(emailKey).set(payload, { merge: true })
-                .catch(err => console.error("Erro ao salvar no Firestore:", err));
-        }
-        
         function registrarHistorico(acao) {
             if (!usuarioAtual) return;
             const novoRegistro = {
@@ -655,22 +614,15 @@
             if (historicoEdicao.length > 50) historicoEdicao.pop();
         }
 
-        // Temporizador para o salvamento automático (Estilo Google Drive)
-        let temporizadorSalvarAuto = null;
-
-        function agendarSalvarAuto() {
-            clearTimeout(temporizadorSalvarAuto);
-            temporizadorSalvarAuto = setTimeout(() => {
-                salvarTurmasDoCursoAtual();
-                if (turmaAtualId) {
-                    salvarDisciplinasAtual();
-                }
-            }, 1500);
-        }
-
-        // SALVAMENTO SEGURO COM SET MERGE
+        // 2. ENVIO ISOLADO POR CURSO (COM SUPORTE A ARRAYS DE PROFESSORES/DISCIPLINAS)
         function salvarDadosNoFirebase(acaoHistorico = null) {
             if (!usuarioAtual || !donoUnidadeEmail) return;
+            
+            // TRAVA DE SEGURANÇA CONTRA APAGAMENTO
+            if (Object.keys(dadosSistema).length === 0 && document.getElementById('lista-cursos').children.length === 0) {
+                console.warn("Salvamento automático bloqueado para proteger os dados no Firestore.");
+                return;
+            }
 
             if (acaoHistorico) {
                 registrarHistorico(acaoHistorico);
@@ -682,9 +634,11 @@
                 historicoEdicao: historicoEdicao,
                 turmasApagadas: turmasApagadas,
                 ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
-                editadoPor: usuarioAtual.email,
-                dadosSistema: dadosSistema
+                editadoPor: usuarioAtual.email
             };
+
+            // Garante que todo o objeto de dados do sistema seja enviado corretamente para não perder arrays de listas
+            payload.dadosSistema = dadosSistema;
 
             if (!cursoAtualId) {
                 payload.listaCursosHTML = document.getElementById('lista-cursos').innerHTML;
@@ -705,7 +659,7 @@
             // Salva as alterações silenciosamente no banco sem poluir o histórico de navegação
             salvarDadosNoFirebase(null);
         }
-        
+
         function salvarDisciplinasAtual() {
             if (cursoAtualId && turmaAtualId) {
                 garantirEstruturaCurso(cursoAtualId);
@@ -897,7 +851,6 @@
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = dadosSistema[cursoAtualId].htmlTurmas;
                 const cards = tempDiv.querySelectorAll('.card-turma');
-                let idTurmaAlvo = null;
                 
                 cards.forEach(card => {
                     if (card.querySelector('h2')?.innerText.trim() === nomeTurma) {
@@ -906,11 +859,6 @@
                         const alunos = card.querySelectorAll('.campo-editavel')[card.querySelectorAll('.campo-editavel').length - 1]?.innerText || '0';
                         const juncao = card.querySelector('.juncao-codigo')?.innerText || 'Nenhuma';
                         
-                        // Extrai o ID exato da turma cadastrado no botão onclick
-                        const onclickAttr = card.getAttribute('onclick') || '';
-                        const match = onclickAttr.match(/abrirDisciplinas\('([^']+)'/);
-                        if (match) idTurmaAlvo = match[1];
-
                         textoFinal += `Status: ${status}\n`;
                         textoFinal += `Início: ${datas[0]?.innerText || '-'}\n`;
                         textoFinal += `Prev. Término: ${datas[1]?.innerText || '-'}\n`;
@@ -923,13 +871,15 @@
                 
                 const containerDisc = document.createElement('div');
                 let achouDisc = false;
+                
+                // Mapeia todas as turmas para achar a correta pelo ID ou pelo DOM ativo
                 let htmlDisciplinasTarget = "";
-
-                // Filtra estritamente as disciplinas correspondentes apenas a esta turma
                 if (turmaAtualId && document.getElementById('nome-turma-titulo')?.innerText.trim() === nomeTurma) {
                     htmlDisciplinasTarget = document.getElementById('lista-disciplinas').innerHTML;
-                } else if (idTurmaAlvo && dadosSistema[cursoAtualId].disciplinas[idTurmaAlvo]) {
-                    htmlDisciplinasTarget = dadosSistema[cursoAtualId].disciplinas[idTurmaAlvo];
+                } else {
+                    for (let tId in dadosSistema[cursoAtualId].disciplinas) {
+                        htmlDisciplinasTarget += dadosSistema[cursoAtualId].disciplinas[tId];
+                    }
                 }
 
                 containerDisc.innerHTML = htmlDisciplinasTarget;
@@ -937,8 +887,11 @@
                     const selDisc = item.querySelector('.select-nome-disciplina');
                     const selProf = item.querySelector('.select-instrutor');
 
+                    // Captura o nome da disciplina correto
                     const disc = selDisc?.getAttribute('data-selecionado') || selDisc?.value || 'Disciplina';
+                    // Captura o instrutor correto
                     const prof = selProf?.getAttribute('data-selecionado') || selProf?.value || 'A DEFINIR';
+                    
                     const datas = item.querySelectorAll('.campo-data');
                     
                     textoFinal += `- Disciplina: ${disc} | Instrutor(a): ${prof} | Período: ${datas[0]?.innerText || ''} a ${datas[1]?.innerText || ''}\n`;
@@ -1607,12 +1560,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             inicializarDragAndDrop();
             inicializarDragAndDropCursos();
-        });
-            // Detecta qualquer digitação na tela para disparar o auto-save de 1.5s
-        document.addEventListener('input', (e) => {
-            if (usuarioEstaEditando()) {
-                agendarSalvarAuto();
-            }
         });
     </script>
 </body>
