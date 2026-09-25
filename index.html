@@ -557,44 +557,57 @@
             }).catch(e => console.error("Erro ao registrar presença:", e));
         }
 
-        // 1. RECEBIMENTO EM TEMPO REAL PROTEGIDO E COMPATÍVEL
-        function conectarAoFirestoreCompartilhado() {
-            if (!usuarioAtual || !donoUnidadeEmail) return;
+        // RECEBIMENTO EM TEMPO REAL CORRIGIDO (COM MERGE RECURSIVO DOS DADOS)
+function conectarAoFirestoreCompartilhado() {
+    if (!usuarioAtual || !donoUnidadeEmail) return;
 
-            const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
+    const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
 
-            if (unsubscribeFirestore) unsubscribeFirestore();
+    if (unsubscribeFirestore) unsubscribeFirestore();
 
-            unsubscribeFirestore = db.collection('usuarios_escola').doc(emailKey).onSnapshot(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
+    unsubscribeFirestore = db.collection('usuarios_escola').doc(emailKey).onSnapshot(doc => {
+        if (doc.exists) {
+            const data = doc.data();
 
-                    // Carrega e mescla a estrutura completa do sistema do banco
-                    if (data.dadosSistema) {
-                        dadosSistema = data.dadosSistema;
-                    }
-
-                    if (data.historicoEdicao) historicoEdicao = data.historicoEdicao;
-                    if (data.turmasApagadas) turmasApagadas = data.turmasApagadas;
-
-                    const operadorDigitando = usuarioEstaEditando();
-
-                    if (!operadorDigitando) {
-                        if (data.listaCursosHTML && data.listaCursosHTML.trim() !== "") {
-                            document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
-                            inicializarDragAndDropCursos();
-                        }
-                        
-                        // Atualiza automaticamente as telas abertas com os dados recuperados
-                        if (cursoAtualId && !document.getElementById('tela-turmas').classList.contains('hidden')) {
-                            carregarTurmasNaTela();
-                        } else if (turmaAtualId && !document.getElementById('tela-disciplinas').classList.contains('hidden')) {
-                            carregarDisciplinasNaTela();
-                        }
+            // MESCLA SEGURA: Garante que os cursos e turmas salvos no Firestore sejam integrados
+            if (data.dadosSistema) {
+                for (let idCurso in data.dadosSistema) {
+                    if (!dadosSistema[idCurso]) {
+                        dadosSistema[idCurso] = data.dadosSistema[idCurso];
+                    } else {
+                        // Mescla turmas e disciplinas sem perder arrays locais
+                        dadosSistema[idCurso].htmlTurmas = data.dadosSistema[idCurso].htmlTurmas || dadosSistema[idCurso].htmlTurmas;
+                        dadosSistema[idCurso].disciplinas = Object.assign({}, dadosSistema[idCurso].disciplinas, data.dadosSistema[idCurso].disciplinas);
+                        dadosSistema[idCurso].listaProfessores = data.dadosSistema[idCurso].listaProfessores || dadosSistema[idCurso].listaProfessores;
+                        dadosSistema[idCurso].listaDisciplinas = data.dadosSistema[idCurso].listaDisciplinas || dadosSistema[idCurso].listaDisciplinas;
                     }
                 }
-            });
+            }
+
+            if (data.historicoEdicao) historicoEdicao = data.historicoEdicao;
+            if (data.turmasApagadas) turmasApagadas = data.turmasApagadas;
+
+            const operadorDigitando = usuarioEstaEditando();
+
+            // Só atualiza a interface se o usuário não estiver no meio de uma digitação
+            if (!operadorDigitando) {
+                if (data.listaCursosHTML && data.listaCursosHTML.trim() !== "") {
+                    document.getElementById('lista-cursos').innerHTML = data.listaCursosHTML;
+                    inicializarDragAndDropCursos();
+                }
+                
+                // Recarrega as turmas ou disciplinas na tela atual
+                if (cursoAtualId && !document.getElementById('tela-turmas').classList.contains('hidden')) {
+                    carregarTurmasNaTela();
+                } else if (turmaAtualId && !document.getElementById('tela-disciplinas').classList.contains('hidden')) {
+                    carregarDisciplinasNaTela();
+                }
+            }
         }
+    }, err => {
+        console.error("Erro ao escutar atualizações do Firestore:", err);
+    });
+}
 
         function registrarHistorico(acao) {
             if (!usuarioAtual) return;
