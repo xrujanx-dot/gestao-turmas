@@ -618,11 +618,22 @@
         function salvarDadosNoFirebase(acaoHistorico = null) {
             if (!usuarioAtual || !donoUnidadeEmail) return;
             
-            // TRAVA DE SEGURANÇA CONTRA APAGAMENTO
-            if (Object.keys(dadosSistema).length === 0 && document.getElementById('lista-cursos').children.length === 0) {
-                console.warn("Salvamento automático bloqueado para proteger os dados no Firestore.");
-                return;
-            }
+            // Temporizador para o salvamento automático (Estilo Google Drive)
+        let temporizadorSalvarAuto = null;
+
+        function agendarSalvarAuto() {
+            clearTimeout(temporizadorSalvarAuto);
+            temporizadorSalvarAuto = setTimeout(() => {
+                salvarTurmasDoCursoAtual();
+                if (turmaAtualId) {
+                    salvarDisciplinasAtual();
+                }
+            }, 1500); // 1.5 segundos após parar de digitar
+        }
+
+        // SALVAMENTO GRANULAR (NÃO SOBRESCREVE O TRABALHO DE OUTROS USUÁRIOS)
+        function salvarDadosNoFirebase(acaoHistorico = null) {
+            if (!usuarioAtual || !donoUnidadeEmail) return;
 
             if (acaoHistorico) {
                 registrarHistorico(acaoHistorico);
@@ -637,15 +648,22 @@
                 editadoPor: usuarioAtual.email
             };
 
-            // Garante que todo o objeto de dados do sistema seja enviado corretamente para não perder arrays de listas
-            payload.dadosSistema = dadosSistema;
+            // Atualização isolada e segura utilizando merge de objetos
+            if (cursoAtualId && dadosSistema[cursoAtualId]) {
+                payload[`dadosSistema.${cursoAtualId}`] = dadosSistema[cursoAtualId];
+            } else {
+                payload.dadosSistema = dadosSistema;
+            }
 
             if (!cursoAtualId) {
                 payload.listaCursosHTML = document.getElementById('lista-cursos').innerHTML;
             }
 
-            db.collection('usuarios_escola').doc(emailKey).set(payload, { merge: true })
-                .catch(err => console.error("Erro ao salvar no Firestore:", err));
+            db.collection('usuarios_escola').doc(emailKey).update(payload)
+                .catch(() => {
+                    // Se o documento ainda não existir, utiliza set com merge
+                    db.collection('usuarios_escola').doc(emailKey).set(payload, { merge: true });
+                });
         }
 
         function salvarTurmasDoCursoAtual() {
@@ -1560,6 +1578,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             inicializarDragAndDrop();
             inicializarDragAndDropCursos();
+        });
+            // Detecta qualquer digitação na tela para disparar o auto-save de 1.5s
+        document.addEventListener('input', (e) => {
+            if (usuarioEstaEditando()) {
+                agendarSalvarAuto();
+            }
         });
     </script>
 </body>
