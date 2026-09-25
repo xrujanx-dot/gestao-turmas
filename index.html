@@ -569,14 +569,9 @@
                 if (doc.exists) {
                     const data = doc.data();
 
+                    // Carrega e mescla a estrutura completa do sistema do banco
                     if (data.dadosSistema) {
-                        for (let idCurso in data.dadosSistema) {
-                            if (!dadosSistema[idCurso]) {
-                                dadosSistema[idCurso] = data.dadosSistema[idCurso];
-                            } else {
-                                Object.assign(dadosSistema[idCurso], data.dadosSistema[idCurso]);
-                            }
-                        }
+                        dadosSistema = data.dadosSistema;
                     }
 
                     if (data.historicoEdicao) historicoEdicao = data.historicoEdicao;
@@ -590,6 +585,7 @@
                             inicializarDragAndDropCursos();
                         }
                         
+                        // Atualiza automaticamente as telas abertas com os dados recuperados
                         if (cursoAtualId && !document.getElementById('tela-turmas').classList.contains('hidden')) {
                             carregarTurmasNaTela();
                         } else if (turmaAtualId && !document.getElementById('tela-disciplinas').classList.contains('hidden')) {
