@@ -613,12 +613,7 @@
             historicoEdicao.unshift(novoRegistro);
             if (historicoEdicao.length > 50) historicoEdicao.pop();
         }
-
-        // 2. ENVIO ISOLADO POR CURSO (COM SUPORTE A ARRAYS DE PROFESSORES/DISCIPLINAS)
-        function salvarDadosNoFirebase(acaoHistorico = null) {
-            if (!usuarioAtual || !donoUnidadeEmail) return;
-            
-            // Temporizador para o salvamento automático (Estilo Google Drive)
+// Temporizador para o salvamento automático (Estilo Google Drive)
         let temporizadorSalvarAuto = null;
 
         function agendarSalvarAuto() {
@@ -677,7 +672,7 @@
             // Salva as alterações silenciosamente no banco sem poluir o histórico de navegação
             salvarDadosNoFirebase(null);
         }
-
+        
         function salvarDisciplinasAtual() {
             if (cursoAtualId && turmaAtualId) {
                 garantirEstruturaCurso(cursoAtualId);
