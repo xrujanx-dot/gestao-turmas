@@ -557,7 +557,7 @@
             }).catch(e => console.error("Erro ao registrar presença:", e));
         }
 
-        // 1. RECEBIMENTO EM TEMPO REAL PROTEGIDO CONTRA SOBRESCRITA DE TELA
+        // 1. RECEBIMENTO EM TEMPO REAL PROTEGIDO E COMPATÍVEL
         function conectarAoFirestoreCompartilhado() {
             if (!usuarioAtual || !donoUnidadeEmail) return;
 
@@ -569,7 +569,6 @@
                 if (doc.exists) {
                     const data = doc.data();
 
-                    // Merge dos dados de cursos para não apagar nada na memória local
                     if (data.dadosSistema) {
                         for (let idCurso in data.dadosSistema) {
                             if (!dadosSistema[idCurso]) {
@@ -583,7 +582,6 @@
                     if (data.historicoEdicao) historicoEdicao = data.historicoEdicao;
                     if (data.turmasApagadas) turmasApagadas = data.turmasApagadas;
 
-                    // Só recarrega a tela se NINGUÉM no seu computador estiver com campo aberto/digitando
                     const operadorDigitando = usuarioEstaEditando();
 
                     if (!operadorDigitando) {
@@ -613,7 +611,8 @@
             historicoEdicao.unshift(novoRegistro);
             if (historicoEdicao.length > 50) historicoEdicao.pop();
         }
-// Temporizador para o salvamento automático (Estilo Google Drive)
+
+        // Temporizador para o salvamento automático (Estilo Google Drive)
         let temporizadorSalvarAuto = null;
 
         function agendarSalvarAuto() {
@@ -623,10 +622,10 @@
                 if (turmaAtualId) {
                     salvarDisciplinasAtual();
                 }
-            }, 1500); // 1.5 segundos após parar de digitar
+            }, 1500);
         }
 
-        // SALVAMENTO GRANULAR (NÃO SOBRESCREVE O TRABALHO DE OUTROS USUÁRIOS)
+        // SALVAMENTO SEGURO COM SET MERGE
         function salvarDadosNoFirebase(acaoHistorico = null) {
             if (!usuarioAtual || !donoUnidadeEmail) return;
 
@@ -640,25 +639,16 @@
                 historicoEdicao: historicoEdicao,
                 turmasApagadas: turmasApagadas,
                 ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
-                editadoPor: usuarioAtual.email
+                editadoPor: usuarioAtual.email,
+                dadosSistema: dadosSistema
             };
-
-            // Atualização isolada e segura utilizando merge de objetos
-            if (cursoAtualId && dadosSistema[cursoAtualId]) {
-                payload[`dadosSistema.${cursoAtualId}`] = dadosSistema[cursoAtualId];
-            } else {
-                payload.dadosSistema = dadosSistema;
-            }
 
             if (!cursoAtualId) {
                 payload.listaCursosHTML = document.getElementById('lista-cursos').innerHTML;
             }
 
-            db.collection('usuarios_escola').doc(emailKey).update(payload)
-                .catch(() => {
-                    // Se o documento ainda não existir, utiliza set com merge
-                    db.collection('usuarios_escola').doc(emailKey).set(payload, { merge: true });
-                });
+            db.collection('usuarios_escola').doc(emailKey).set(payload, { merge: true })
+                .catch(err => console.error("Erro ao salvar no Firestore:", err));
         }
 
         function salvarTurmasDoCursoAtual() {
