@@ -557,10 +557,11 @@
             }).catch(e => console.error("Erro ao registrar presença:", e));
         }
 
-        // RECEBIMENTO EM TEMPO REAL COMPATÍVEL COM DADOS NA RAIZ E EM DADOSSISTEMA
+        // 1. ESCUTADOR COMPATÍVEL E MULTI-UTILIZADOR
         function conectarAoFirestoreCompartilhado() {
             if (!usuarioAtual || !donoUnidadeEmail) return;
 
+            // Chave FIXA do dono da unidade para TODOS os e-mails lerem do mesmo local
             const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
 
             if (unsubscribeFirestore) unsubscribeFirestore();
@@ -569,12 +570,12 @@
                 if (doc.exists) {
                     const data = doc.data();
 
-                    // 1. Se os dados estiverem na estrutura nova (dadosSistema)
+                    // 1. Formato novo (dadosSistema)
                     if (data.dadosSistema) {
                         dadosSistema = data.dadosSistema;
                     }
 
-                    // 2. Compatibilidade: Se os dados estiverem gravados na raiz do Firebase
+                    // 2. Formato antigo gravado na raiz do documento do Firebase
                     if (data.htmlTurmas || data.disciplinas) {
                         if (!dadosSistema['curso_edificacoes']) {
                             dadosSistema['curso_edificacoes'] = { htmlTurmas: '', disciplinas: {}, listaProfessores: [], listaDisciplinas: [] };
@@ -597,7 +598,6 @@
                             inicializarDragAndDropCursos();
                         }
                         
-                        // Recarrega as turmas ou disciplinas na tela atual
                         if (cursoAtualId && !document.getElementById('tela-turmas').classList.contains('hidden')) {
                             carregarTurmasNaTela();
                         } else if (turmaAtualId && !document.getElementById('tela-disciplinas').classList.contains('hidden')) {
@@ -610,6 +610,39 @@
             });
         }
 
+        // 2. SALVAMENTO COMPARTILHADO (GRAVA NO DOCUMENTO DO DONO DA UNIDADE)
+        function salvarDadosNoFirebase(acaoHistorico = null) {
+            if (!usuarioAtual || !donoUnidadeEmail) return;
+
+            // Trava de segurança contra salvamento de objeto totalmente vazio
+            if (Object.keys(dadosSistema).length === 0) {
+                console.warn("Salvamento cancelado: dadosSistema está vazio.");
+                return;
+            }
+
+            if (acaoHistorico) {
+                registrarHistorico(acaoHistorico);
+            }
+
+            // Garante que o salvamento vá para o e-mail da unidade e não para o e-mail de quem está logado
+            const emailKey = donoUnidadeEmail.toLowerCase().replace(/[^a-z0-9_@.-]/g, '_');
+
+            let payload = {
+                historicoEdicao: historicoEdicao,
+                turmasApagadas: turmasApagadas,
+                ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp(),
+                editadoPor: usuarioAtual.email,
+                dadosSistema: dadosSistema
+            };
+
+            if (!cursoAtualId) {
+                payload.listaCursosHTML = document.getElementById('lista-cursos').innerHTML;
+            }
+
+            db.collection('usuarios_escola').doc(emailKey).set(payload, { merge: true })
+                .catch(err => console.error("Erro ao salvar no Firestore:", err));
+        }
+        
         function registrarHistorico(acao) {
             if (!usuarioAtual) return;
             const novoRegistro = {
